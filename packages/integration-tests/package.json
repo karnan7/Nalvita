@@ -12,7 +12,9 @@
     "@nalvita/core": "*",
     "@supabase/supabase-js": "^2.47.0",
     "@types/node": "^22.10.0",
+    "@types/pg": "^8.11.0",
     "eslint": "^9.15.0",
+    "pg": "^8.13.0",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.15.0",
     "vitest": "^3.0.0"

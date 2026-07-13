@@ -6,6 +6,8 @@ export interface SupabaseTestConfig {
   url: string;
   anonKey: string;
   serviceRoleKey: string;
+  /** Direct Postgres connection, used only for catalog/drift queries. */
+  dbUrl: string;
 }
 
 const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost', '::1', '[::1]']);
@@ -55,22 +57,25 @@ export function getSupabaseTestConfig(): SupabaseTestConfig {
   let url = process.env.SUPABASE_URL;
   let anonKey = process.env.SUPABASE_ANON_KEY;
   let serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  let dbUrl = process.env.SUPABASE_DB_URL;
 
-  if (!url || !anonKey || !serviceRoleKey) {
+  if (!url || !anonKey || !serviceRoleKey || !dbUrl) {
     const status = readStatusJson();
     url = status.API_URL;
     anonKey = status.ANON_KEY;
     serviceRoleKey = status.SERVICE_ROLE_KEY;
+    dbUrl = status.DB_URL;
   }
 
-  if (!url || !anonKey || !serviceRoleKey) {
+  if (!url || !anonKey || !serviceRoleKey || !dbUrl) {
     throw new Error(
       'Missing Supabase URL or keys. Run `supabase start`, or set SUPABASE_URL, ' +
-        'SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY.',
+        'SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY and SUPABASE_DB_URL.',
     );
   }
 
   assertLocalhost(url);
-  cached = { url, anonKey, serviceRoleKey };
+  assertLocalhost(dbUrl);
+  cached = { url, anonKey, serviceRoleKey, dbUrl };
   return cached;
 }

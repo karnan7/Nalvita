@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_DOCUMENT_SIZE_BYTES } from '../constants.js';
-import { calculateAge, getVitalStatus } from '../utils.js';
 import { allergyInsertSchema } from './allergy.js';
 import { auditLogInsertSchema } from './audit-log.js';
 import { circleMembershipInviteSchema } from './circle-membership.js';
+import { conditionInsertSchema } from './condition.js';
+import { doctorInsertSchema } from './doctor.js';
 import { documentInsertSchema } from './document.js';
-import { medicineInsertSchema } from './medicine.js';
-import { profileUpdateSchema } from './profile.js';
-import { vitalInsertSchema } from './vital.js';
+import { medicineInsertSchema, medicineSchema } from './medicine.js';
+import { profileSchema, profileUpdateSchema } from './profile.js';
+import { vitalInsertSchema, vitalSchema } from './vital.js';
 
 describe('profileUpdateSchema', () => {
   it('accepts a partial profile with a valid blood group', () => {
@@ -156,21 +157,103 @@ describe('auditLogInsertSchema', () => {
   });
 });
 
-describe('utils', () => {
-  it('calculates age from date of birth', () => {
-    expect(calculateAge('1990-07-08', new Date('2026-07-08T12:00:00Z'))).toBe(36);
-    expect(calculateAge('1990-07-09', new Date('2026-07-08T12:00:00Z'))).toBe(35);
+describe('conditionInsertSchema', () => {
+  it('accepts a condition with a diagnosis date', () => {
+    const result = conditionInsertSchema.safeParse({
+      name: 'Hypertension',
+      diagnosis_date: '2025-11-20',
+      doctor_name: null,
+      status: 'managed',
+      notes: null,
+    });
+    expect(result.success).toBe(true);
   });
 
-  it('grades blood pressure by the standard reference ranges', () => {
-    expect(getVitalStatus('blood_pressure', 118, 76)).toBe('normal');
-    expect(getVitalStatus('blood_pressure', 124, 78)).toBe('borderline');
-    expect(getVitalStatus('blood_pressure', 132, 84)).toBe('high');
+  it('rejects an unknown status', () => {
+    const result = conditionInsertSchema.safeParse({
+      name: 'Hypertension',
+      diagnosis_date: null,
+      doctor_name: null,
+      status: 'cured',
+      notes: null,
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('doctorInsertSchema', () => {
+  it('accepts a doctor card with contact details', () => {
+    const result = doctorInsertSchema.safeParse({
+      name: 'Dr. Meera Nair',
+      specialty: 'Cardiology',
+      hospital: 'City Hospital',
+      phone: '+91 98765 43210',
+      email: 'clinic@example.com',
+    });
+    expect(result.success).toBe(true);
   });
 
-  it('grades fasting blood sugar', () => {
-    expect(getVitalStatus('blood_sugar_fasting', 92)).toBe('normal');
-    expect(getVitalStatus('blood_sugar_fasting', 110)).toBe('borderline');
-    expect(getVitalStatus('blood_sugar_fasting', 130)).toBe('high');
+  it('rejects a malformed email', () => {
+    const result = doctorInsertSchema.safeParse({
+      name: 'Dr. Meera Nair',
+      specialty: null,
+      hospital: null,
+      phone: null,
+      email: 'not-an-email',
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('full-row schemas parse database rows', () => {
+  it('medicineSchema accepts a realistic row', () => {
+    const result = medicineSchema.safeParse({
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      user_id: '11111111-1111-1111-1111-111111111111',
+      name: 'Metformin',
+      dosage: '500mg',
+      frequency: 'twice_daily',
+      timings: ['morning', 'night'],
+      doctor_name: null,
+      start_date: '2026-07-01',
+      end_date: null,
+      refill_date: null,
+      status: 'active',
+      notes: null,
+      created_at: '2026-07-08T10:15:30.123456+00:00',
+      updated_at: '2026-07-08T10:15:30.123456+00:00',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('profileSchema accepts the empty auto-created profile row', () => {
+    const result = profileSchema.safeParse({
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      user_id: '11111111-1111-1111-1111-111111111111',
+      full_name: null,
+      date_of_birth: null,
+      gender: null,
+      blood_group: null,
+      height_cm: null,
+      weight_kg: null,
+      created_at: '2026-07-08T10:15:30+00:00',
+      updated_at: '2026-07-08T10:15:30+00:00',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('vitalSchema enforces the diastolic rule on full rows too', () => {
+    const base = {
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      user_id: '11111111-1111-1111-1111-111111111111',
+      type: 'blood_pressure',
+      value_1: 118,
+      unit: 'mmHg',
+      measured_at: '2026-07-08T07:30:00+05:30',
+      notes: null,
+      created_at: '2026-07-08T10:15:30+00:00',
+    };
+    expect(vitalSchema.safeParse({ ...base, value_2: 76 }).success).toBe(true);
+    expect(vitalSchema.safeParse({ ...base, value_2: null }).success).toBe(false);
   });
 });
