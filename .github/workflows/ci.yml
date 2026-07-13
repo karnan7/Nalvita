@@ -33,3 +33,36 @@ jobs:
 
       - name: Test
         run: npm run test
+
+  db-tests:
+    name: RLS tests (pgTAP + integration)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start local Supabase (applies all migrations)
+        run: supabase start
+
+      - name: Run pgTAP suite
+        run: supabase test db
+
+      - name: Build packages
+        run: npm run build
+
+      - name: Run RLS integration suite
+        run: npm run test:integration
