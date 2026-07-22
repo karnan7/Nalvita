@@ -24,9 +24,32 @@ additional_redirect_urls = ["https://localhost:5173"]
 # Sessions stay active for 30 days unless the user logs out.
 jwt_expiry = 3600
 
+[auth.rate_limit]
+# Failed sign-in code entries: 5 verification attempts per 5-minute window,
+# then further tries are blocked. Closest free-tier equivalent to
+# "5 wrong codes locks you out for 10 minutes" (the window length is fixed).
+token_verifications = 5
+
 [auth.email]
 enable_signup = true
 enable_confirmations = false
+otp_length = 6
+# A sign-in code stays valid for 10 minutes.
+otp_expiry = 600
+# At most one code email per minute per address.
+max_frequency = "1m0s"
+
+# signInWithOtp uses the magic-link template; ours shows the 6-digit code.
+[auth.email.template.magic_link]
+subject = "Your Nalvita sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+# Google OAuth. Local dev needs the env vars from .env.example in your shell;
+# the cloud project is configured in Dashboard → Authentication → Providers.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 
 [storage]
 enabled = true
