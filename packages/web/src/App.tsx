@@ -1,30 +1,24 @@
-import { BLOOD_GROUPS } from '@nalvita/core';
-import { HeartPulse } from 'lucide-react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
+import { AppLayout } from '@/components/app-layout';
+import { RequireAuth } from '@/components/require-auth';
+import DashboardPage from '@/pages/dashboard';
+import LoginPage from '@/pages/login';
+import OnboardingPage from '@/pages/onboarding';
+import SettingsPage from '@/pages/settings';
 
 export default function App() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-      <div className="flex items-center gap-3">
-        <HeartPulse className="size-10 text-destructive" />
-        <h1 className="text-4xl font-bold tracking-tight">Nalvita</h1>
-      </div>
-      <p className="max-w-md text-center text-muted-foreground">
-        Your personal health records vault. Documents, medicines, vitals, and history — all in one
-        place.
-      </p>
-      <div className="flex flex-wrap justify-center gap-2">
-        {BLOOD_GROUPS.map((group) => (
-          <span
-            key={group}
-            className="rounded-full border px-3 py-1 text-sm font-medium text-muted-foreground"
-          >
-            {group}
-          </span>
-        ))}
-      </div>
-      <Button size="lg">Get started</Button>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route element={<RequireAuth />}>
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route element={<AppLayout />}>
+          <Route index element={<DashboardPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+        </Route>
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
