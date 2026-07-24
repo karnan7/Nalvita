@@ -63,3 +63,28 @@ export function stubProfileSelect(row: Record<string, unknown>) {
     select: () => ({ eq: () => ({ single: async () => ({ data: row, error: null }) }) }),
   } as never);
 }
+
+/** A documents row as PostgREST would return it. */
+export function makeDocumentRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000d1',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    title: 'Blood test report',
+    category: 'lab_report',
+    doctor_name: 'City Lab',
+    doc_date: '2026-06-01',
+    file_path: '00000000-0000-4000-8000-000000000001/aaaa.pdf',
+    file_type: 'application/pdf',
+    file_size: 123456,
+    notes: null,
+    created_at: '2026-06-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** Makes `supabase.from('documents').select('*').order()` resolve to the given rows. */
+export function stubDocumentsList(rows: Record<string, unknown>[]) {
+  vi.mocked(supabase.from).mockReturnValue({
+    select: () => ({ order: async () => ({ data: rows, error: null }) }),
+  } as never);
+}

@@ -25,7 +25,10 @@ export function AppLayout() {
             <HeartPulse className="size-6 text-destructive" />
             <span className="text-lg font-bold tracking-tight">Nalvita</span>
           </Link>
-          <nav>
+          <nav className="flex items-center gap-4">
+            <Link to="/documents" className="text-sm text-muted-foreground hover:text-foreground">
+              Documents
+            </Link>
             <Link to="/settings" className="text-sm text-muted-foreground hover:text-foreground">
               Settings
             </Link>
