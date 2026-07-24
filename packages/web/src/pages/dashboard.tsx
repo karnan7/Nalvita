@@ -1,3 +1,7 @@
+import { FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { useProfile } from '@/lib/profile';
 
@@ -11,9 +15,15 @@ export default function DashboardPage() {
         {profile?.full_name ? `Hello, ${profile.full_name}` : 'Hello'}
       </h1>
       <p className="max-w-md text-muted-foreground">
-        Your personal health records vault is ready. Uploading documents, tracking medicines, and
-        logging vitals are coming next.
+        Your personal health records vault is ready. Store your reports, prescriptions, and scans in
+        one place — tracking medicines and logging vitals are coming next.
       </p>
+      <Button asChild className="self-start">
+        <Link to="/documents">
+          <FileText />
+          Go to my documents
+        </Link>
+      </Button>
     </div>
   );
 }
