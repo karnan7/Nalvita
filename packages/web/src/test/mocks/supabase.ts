@@ -88,3 +88,31 @@ export function stubDocumentsList(rows: Record<string, unknown>[]) {
     select: () => ({ order: async () => ({ data: rows, error: null }) }),
   } as never);
 }
+
+/** A medicines row as PostgREST would return it. */
+export function makeMedicineRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000e1',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    name: 'Metformin',
+    dosage: '500mg',
+    frequency: 'twice_daily',
+    timings: ['morning', 'night'],
+    doctor_name: 'Dr Menon',
+    start_date: '2026-06-01',
+    end_date: null,
+    refill_date: null,
+    status: 'active',
+    notes: null,
+    created_at: '2026-06-01T00:00:00.000Z',
+    updated_at: '2026-06-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** Makes `supabase.from('medicines').select('*').order()` resolve to the given rows. */
+export function stubMedicinesList(rows: Record<string, unknown>[]) {
+  vi.mocked(supabase.from).mockReturnValue({
+    select: () => ({ order: async () => ({ data: rows, error: null }) }),
+  } as never);
+}
