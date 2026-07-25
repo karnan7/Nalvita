@@ -5,6 +5,7 @@ import { RequireAuth } from '@/components/require-auth';
 import DashboardPage from '@/pages/dashboard';
 import DocumentsPage from '@/pages/documents';
 import LoginPage from '@/pages/login';
+import MedicinesPage from '@/pages/medicines';
 import OnboardingPage from '@/pages/onboarding';
 import SettingsPage from '@/pages/settings';
 
@@ -17,6 +18,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/medicines" element={<MedicinesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>

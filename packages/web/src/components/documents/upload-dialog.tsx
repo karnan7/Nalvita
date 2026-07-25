@@ -1,6 +1,6 @@
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@nalvita/core';
 import { UploadCloud } from 'lucide-react';
-import { useId, useRef, useState, type DragEvent, type FormEvent } from 'react';
+import { useId, useRef, useState, type DragEvent, type SyntheticEvent } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -86,7 +86,7 @@ export function UploadDialog({ open, onClose }: Readonly<UploadDialogProps>) {
     acceptFile(event.dataTransfer.files[0]);
   }
 
-  function submit(event: FormEvent) {
+  function submit(event: SyntheticEvent) {
     event.preventDefault();
     if (!file || category === '') return;
     upload.mutate(

@@ -29,6 +29,9 @@ export function AppLayout() {
             <Link to="/documents" className="text-sm text-muted-foreground hover:text-foreground">
               Documents
             </Link>
+            <Link to="/medicines" className="text-sm text-muted-foreground hover:text-foreground">
+              Medicines
+            </Link>
             <Link to="/settings" className="text-sm text-muted-foreground hover:text-foreground">
               Settings
             </Link>
