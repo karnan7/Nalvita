@@ -17,11 +17,11 @@ export const conditionSchema = z.object({
 
 export type Condition = z.infer<typeof conditionSchema>;
 
-export const conditionInsertSchema = conditionSchema.omit({
-  id: true,
-  user_id: true,
-  created_at: true,
-  updated_at: true,
-});
+/** Payload for adding a condition; status defaults to active. */
+export const conditionInsertSchema = conditionSchema
+  .omit({ id: true, user_id: true, created_at: true, updated_at: true })
+  .extend({
+    status: z.enum(CONDITION_STATUSES).default('active'),
+  });
 
 export type ConditionInsert = z.infer<typeof conditionInsertSchema>;

@@ -7,6 +7,7 @@ import DocumentsPage from '@/pages/documents';
 import LoginPage from '@/pages/login';
 import MedicinesPage from '@/pages/medicines';
 import OnboardingPage from '@/pages/onboarding';
+import ProfilePage from '@/pages/profile';
 import SettingsPage from '@/pages/settings';
 import VitalsPage from '@/pages/vitals';
 
@@ -21,6 +22,7 @@ export default function App() {
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/medicines" element={<MedicinesPage />} />
           <Route path="/vitals" element={<VitalsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>

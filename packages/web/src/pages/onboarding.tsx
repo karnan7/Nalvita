@@ -7,14 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth-context';
-import { useUpdateProfile } from '@/lib/profile';
-
-const GENDER_LABELS: Record<Gender, string> = {
-  male: 'Male',
-  female: 'Female',
-  other: 'Other',
-  prefer_not_to_say: 'Prefer not to say',
-};
+import { GENDER_LABELS, useUpdateProfile } from '@/lib/profile';
 
 export default function OnboardingPage() {
   const { session } = useAuth();
