@@ -1,4 +1,4 @@
-import { FileText, Pill } from 'lucide-react';
+import { Activity, FileText, Pill } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ export default function DashboardPage() {
       </h1>
       <p className="max-w-md text-muted-foreground">
         Your personal health records vault is ready. Store your reports, prescriptions, and scans,
-        and keep track of the medicines you take — all in one place.
+        track the medicines you take, and log your vitals to see how they trend over time.
       </p>
       <div className="flex flex-wrap gap-3">
         <Button asChild className="self-start">
@@ -29,6 +29,12 @@ export default function DashboardPage() {
           <Link to="/medicines">
             <Pill />
             My medicines
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="self-start">
+          <Link to="/vitals">
+            <Activity />
+            My vitals
           </Link>
         </Button>
       </div>

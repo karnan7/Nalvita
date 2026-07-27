@@ -32,6 +32,9 @@ export function AppLayout() {
             <Link to="/medicines" className="text-sm text-muted-foreground hover:text-foreground">
               Medicines
             </Link>
+            <Link to="/vitals" className="text-sm text-muted-foreground hover:text-foreground">
+              Vitals
+            </Link>
             <Link to="/settings" className="text-sm text-muted-foreground hover:text-foreground">
               Settings
             </Link>

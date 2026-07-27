@@ -8,6 +8,7 @@ import LoginPage from '@/pages/login';
 import MedicinesPage from '@/pages/medicines';
 import OnboardingPage from '@/pages/onboarding';
 import SettingsPage from '@/pages/settings';
+import VitalsPage from '@/pages/vitals';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/medicines" element={<MedicinesPage />} />
+          <Route path="/vitals" element={<VitalsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>
