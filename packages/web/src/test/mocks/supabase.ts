@@ -139,3 +139,76 @@ export function stubVitalsList(rows: Record<string, unknown>[]) {
     select: () => ({ order: async () => ({ data: rows, error: null }) }),
   } as never);
 }
+
+/** An allergies row as PostgREST would return it. */
+export function makeAllergyRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000b1',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    allergen: 'Penicillin',
+    severity: 'severe',
+    reaction: 'Rash and swelling',
+    created_at: '2026-07-01T00:00:00.000Z',
+    updated_at: '2026-07-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** A conditions row as PostgREST would return it. */
+export function makeConditionRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000c1',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    name: 'Hypertension',
+    diagnosis_date: '2020-05-01',
+    doctor_name: 'Dr Suresh Pillai',
+    status: 'active',
+    notes: null,
+    created_at: '2026-07-01T00:00:00.000Z',
+    updated_at: '2026-07-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** A doctors row as PostgREST would return it. */
+export function makeDoctorRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000d2',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    name: 'Dr Suresh Pillai',
+    specialty: 'Cardiologist',
+    hospital: 'PVS Hospital',
+    phone: '+911234567890',
+    email: 'clinic@example.com',
+    created_at: '2026-07-01T00:00:00.000Z',
+    updated_at: '2026-07-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+interface TableFixtures {
+  profiles?: Record<string, unknown>;
+  allergies?: Record<string, unknown>[];
+  conditions?: Record<string, unknown>[];
+  doctors?: Record<string, unknown>[];
+}
+
+/**
+ * Routes `supabase.from(table)` to the right builder per table, for pages that
+ * read several tables at once: `profiles` resolves a single row via
+ * `.select().eq().single()`, list tables via `.select().order()`.
+ */
+export function stubTables(fixtures: TableFixtures) {
+  vi.mocked(supabase.from).mockImplementation((table: string) => {
+    if (table === 'profiles') {
+      const row = fixtures.profiles ?? makeProfileRow();
+      return {
+        select: () => ({ eq: () => ({ single: async () => ({ data: row, error: null }) }) }),
+      } as never;
+    }
+    const rows = (fixtures as Record<string, Record<string, unknown>[]>)[table] ?? [];
+    return {
+      select: () => ({ order: async () => ({ data: rows, error: null }) }),
+    } as never;
+  });
+}
