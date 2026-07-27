@@ -116,3 +116,26 @@ export function stubMedicinesList(rows: Record<string, unknown>[]) {
     select: () => ({ order: async () => ({ data: rows, error: null }) }),
   } as never);
 }
+
+/** A vitals row as PostgREST would return it (a blood pressure reading by default). */
+export function makeVitalRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000f1',
+    user_id: '00000000-0000-4000-8000-000000000001',
+    type: 'blood_pressure',
+    value_1: 128,
+    value_2: 84,
+    unit: 'mmHg',
+    measured_at: '2026-07-20T08:00:00.000Z',
+    notes: null,
+    created_at: '2026-07-20T08:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** Makes `supabase.from('vitals').select('*').order()` resolve to the given rows. */
+export function stubVitalsList(rows: Record<string, unknown>[]) {
+  vi.mocked(supabase.from).mockReturnValue({
+    select: () => ({ order: async () => ({ data: rows, error: null }) }),
+  } as never);
+}
