@@ -191,6 +191,9 @@ interface TableFixtures {
   allergies?: Record<string, unknown>[];
   conditions?: Record<string, unknown>[];
   doctors?: Record<string, unknown>[];
+  documents?: Record<string, unknown>[];
+  medicines?: Record<string, unknown>[];
+  vitals?: Record<string, unknown>[];
 }
 
 /**
