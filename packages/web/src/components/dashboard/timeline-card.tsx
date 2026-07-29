@@ -1,4 +1,4 @@
-import { Activity, FileText, Pill, type LucideIcon } from 'lucide-react';
+import { Activity, FileText, Pill, Stethoscope, type LucideIcon } from 'lucide-react';
 
 import {
   CardSkeleton,
@@ -14,6 +14,7 @@ const KIND_ICONS: Record<TimelineKind, LucideIcon> = {
   document: FileText,
   vital: Activity,
   medicine: Pill,
+  condition: Stethoscope,
 };
 
 /** Formats an ISO date or datetime as a short calendar date. */

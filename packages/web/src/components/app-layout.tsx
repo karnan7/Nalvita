@@ -35,6 +35,9 @@ export function AppLayout() {
             <Link to="/vitals" className="text-sm text-muted-foreground hover:text-foreground">
               Vitals
             </Link>
+            <Link to="/timeline" className="text-sm text-muted-foreground hover:text-foreground">
+              Timeline
+            </Link>
             <Link to="/profile" className="text-sm text-muted-foreground hover:text-foreground">
               Profile
             </Link>
