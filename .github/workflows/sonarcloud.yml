@@ -1,0 +1,45 @@
+name: SonarCloud
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  sonarcloud:
+    name: Quality gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so SonarCloud can assign issues to blame and compute
+          # new-code coverage correctly.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # @nalvita/core must be built before @nalvita/web tests can resolve it.
+      - name: Build packages
+        run: npm run build
+
+      # Generate lcov for both packages. Core has coverage enabled in its config;
+      # web needs the flag. Report paths are declared in sonar-project.properties.
+      - name: Test with coverage (core)
+        run: npm run test -w @nalvita/core
+
+      - name: Test with coverage (web)
+        run: npm run test -w @nalvita/web -- --coverage
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

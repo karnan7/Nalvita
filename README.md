@@ -1,5 +1,8 @@
 # Nalvita — Personal Health Records
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=karnan7_Nalvita&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=karnan7_Nalvita)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=karnan7_Nalvita&metric=coverage)](https://sonarcloud.io/summary/new_code?id=karnan7_Nalvita)
+
 A personal health records vault: documents, medicines, vitals, allergies,
 conditions, and doctors — all in one place, running entirely on free tiers.
 
@@ -68,6 +71,10 @@ Everything runs on free tiers — no credit card required anywhere.
   production; every PR gets a preview URL. 100 GB bandwidth/month.
 - **GitHub Actions (free tier)** — lint + typecheck + test on every PR,
   well within the free 2,000 minutes/month.
+- **SonarCloud (free for public repos)** — static analysis + security scanning
+  on every PR. A quality gate (no new blocker/critical issues, no unreviewed
+  security hotspots, ≥ 60% coverage on new code) blocks merges when it fails.
+  This is why the repo is public — see `sonar-project.properties`.
 - **Sentry (free tier)** — error tracking, 5k errors/month. DSN documented in
   `.env.example`.
 - **Deferred to keep costs at zero:** phone/SMS OTP (SMS costs money even at
