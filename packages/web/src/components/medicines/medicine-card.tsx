@@ -2,6 +2,7 @@ import type { Medicine } from '@nalvita/core';
 import { Pencil, Square } from 'lucide-react';
 import { useState } from 'react';
 
+import { StatusBadge } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -52,11 +53,7 @@ export function MedicineCard({ medicine, onEdit }: Readonly<MedicineCardProps>) 
           <p className="font-medium">
             {medicine.name} <span className="text-muted-foreground">· {medicine.dosage}</span>
           </p>
-          {refillDue && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-              Refill due
-            </span>
-          )}
+          {refillDue && <StatusBadge variant="high">Refill due</StatusBadge>}
         </div>
         <p className="text-sm text-muted-foreground">{schedule.join(' · ')}</p>
         <p className="text-sm text-muted-foreground">{meta.join(' · ')}</p>

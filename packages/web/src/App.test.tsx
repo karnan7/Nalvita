@@ -32,6 +32,10 @@ describe('App routing', () => {
     stubProfileSelect(makeProfileRow({ full_name: 'Test Person' }));
     renderWithProviders(<App />);
     expect(await screen.findByText('Hello, Test Person')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+    // The sidebar and the responsive mobile nav each render the link.
+    expect(screen.getAllByRole('link', { name: 'Settings' })[0]).toHaveAttribute(
+      'href',
+      '/settings',
+    );
   });
 });

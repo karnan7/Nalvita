@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
 import { AuthProvider } from '@/components/auth-provider';
+import { ThemeProvider } from '@/lib/theme';
 
 /** Renders with the same provider stack as main.tsx, minus BrowserRouter. */
 export function renderWithProviders(ui: ReactNode, { route = '/' } = {}) {
@@ -11,10 +12,12 @@ export function renderWithProviders(ui: ReactNode, { route = '/' } = {}) {
     defaultOptions: { queries: { retry: false } },
   });
   return render(
-    <MemoryRouter initialEntries={[route]}>
-      <AuthProvider>
-        <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
-      </AuthProvider>
-    </MemoryRouter>,
+    <ThemeProvider>
+      <MemoryRouter initialEntries={[route]}>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+        </AuthProvider>
+      </MemoryRouter>
+    </ThemeProvider>,
   );
 }

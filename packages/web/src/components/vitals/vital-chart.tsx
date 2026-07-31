@@ -60,7 +60,7 @@ export function VitalChart({ vitals, type, days }: Readonly<VitalChartProps>) {
                 type="monotone"
                 dataKey="systolic"
                 name="Systolic"
-                stroke="#dc2626"
+                stroke="var(--status-critical-fg)"
                 strokeWidth={2}
                 dot={{ r: 2 }}
               />
@@ -68,7 +68,7 @@ export function VitalChart({ vitals, type, days }: Readonly<VitalChartProps>) {
                 type="monotone"
                 dataKey="diastolic"
                 name="Diastolic"
-                stroke="#2563eb"
+                stroke="var(--status-low-fg)"
                 strokeWidth={2}
                 dot={{ r: 2 }}
               />
@@ -78,7 +78,7 @@ export function VitalChart({ vitals, type, days }: Readonly<VitalChartProps>) {
               type="monotone"
               dataKey="value"
               name={VITAL_TYPE_LABELS[type]}
-              stroke="#0f6e56"
+              stroke="var(--interactive-default)"
               strokeWidth={2}
               dot={{ r: 2 }}
             />

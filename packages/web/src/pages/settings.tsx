@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { ThemeSelect } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
 import { supabase } from '@/lib/supabase';
@@ -20,10 +21,19 @@ export default function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-      <section className="flex max-w-sm flex-col gap-3 rounded-lg border p-6 shadow-sm">
+
+      <section className="flex max-w-sm flex-col gap-3 rounded-xl border border-border-default bg-surface p-6 shadow-sm">
+        <h2 className="text-lg font-semibold">Appearance</h2>
+        <p className="text-sm text-content-muted">
+          Choose a theme, or follow your device's system setting.
+        </p>
+        <ThemeSelect />
+      </section>
+
+      <section className="flex max-w-sm flex-col gap-3 rounded-xl border border-border-default bg-surface p-6 shadow-sm">
         <h2 className="text-lg font-semibold">Your account</h2>
-        <p className="text-sm text-muted-foreground">Signed in as {session?.user.email}</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-content-muted">Signed in as {session?.user.email}</p>
+        <p className="text-sm text-content-muted">
           Logging out ends your session on every device where you're signed in.
         </p>
         {error && <p className="text-sm text-destructive">{error}</p>}

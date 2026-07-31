@@ -39,17 +39,6 @@ export const VITAL_STATUS_LABELS: Record<VitalStatus, string> = {
   low: 'Low',
 };
 
-/**
- * Badge colours follow the shared health semantics: green = normal,
- * amber = borderline, red = alert (both high and low).
- */
-export const VITAL_STATUS_CLASSES: Record<VitalStatus, string> = {
-  normal: 'bg-green-100 text-green-800',
-  borderline: 'bg-amber-100 text-amber-800',
-  high: 'bg-red-100 text-red-800',
-  low: 'bg-red-100 text-red-800',
-};
-
 export function statusOf(vital: Vital): VitalStatus {
   return getVitalStatus(vital.type, vital.value_1, vital.value_2);
 }

@@ -1,10 +1,6 @@
 import { Activity, FileText, Pill, Stethoscope, type LucideIcon } from 'lucide-react';
 
-import {
-  CardSkeleton,
-  DashboardCard,
-  EmptyState,
-} from '@/components/dashboard/dashboard-card';
+import { CardSkeleton, EmptyState, SectionCard } from '@/components/ui-nalvita';
 import { useDocuments } from '@/lib/documents';
 import { useMedicines } from '@/lib/medicines';
 import { buildTimeline, type TimelineKind } from '@/lib/timeline';
@@ -33,7 +29,7 @@ export function TimelineCard() {
   const events = buildTimeline(documents.data ?? [], vitals.data ?? [], medicines.data ?? []);
 
   return (
-    <DashboardCard title="Recent activity">
+    <SectionCard title="Recent activity">
       {isPending && <CardSkeleton />}
       {isError && <EmptyState>We couldn't load your recent activity.</EmptyState>}
       {!isPending && !isError && events.length === 0 && (
@@ -45,14 +41,14 @@ export function TimelineCard() {
             const Icon = KIND_ICONS[event.kind];
             return (
               <li key={event.id} className="flex items-start gap-3">
-                <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <Icon className="mt-0.5 size-4 shrink-0 text-content-muted" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{event.title}</p>
                   {event.detail && (
-                    <p className="truncate text-xs text-muted-foreground">{event.detail}</p>
+                    <p className="truncate text-xs text-content-muted">{event.detail}</p>
                   )}
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
+                <span className="shrink-0 text-xs text-content-muted">
                   {formatEventDate(event.at)}
                 </span>
               </li>
@@ -60,6 +56,6 @@ export function TimelineCard() {
           })}
         </ul>
       )}
-    </DashboardCard>
+    </SectionCard>
   );
 }
