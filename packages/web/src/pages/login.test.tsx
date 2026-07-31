@@ -6,54 +6,40 @@ import LoginPage from './login';
 import { supabase } from '@/lib/supabase';
 import { renderWithProviders } from '@/test/render';
 
-async function requestCode(email = 'test.user@example.com') {
+async function requestLink(email = 'test.user@example.com') {
   const user = userEvent.setup();
   renderWithProviders(<LoginPage />, { route: '/login' });
   await user.type(await screen.findByLabelText('Email address'), email);
-  await user.click(screen.getByRole('button', { name: 'Email me a code' }));
+  await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
   return user;
 }
 
 describe('LoginPage', () => {
-  it('emails a one-time code and moves to the code step', async () => {
-    await requestCode();
+  it('emails a sign-in link and moves to the check-your-email step', async () => {
+    await requestLink();
     expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
       email: 'test.user@example.com',
-      options: { shouldCreateUser: true },
+      options: { shouldCreateUser: true, emailRedirectTo: window.location.origin },
     });
-    expect(await screen.findByLabelText('Sign-in code')).toBeInTheDocument();
+    expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
+    expect(screen.getByText(/we sent a sign-in link to test.user@example.com/i)).toBeInTheDocument();
   });
 
-  it('verifies the entered code as an email OTP', async () => {
-    const user = await requestCode();
-    await user.type(await screen.findByLabelText('Sign-in code'), '123456');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(supabase.auth.verifyOtp).toHaveBeenCalledWith({
-      email: 'test.user@example.com',
-      token: '123456',
-      type: 'email',
-    });
-  });
-
-  it('shows a friendly message for a wrong code', async () => {
-    vi.mocked(supabase.auth.verifyOtp).mockResolvedValueOnce({
+  it('shows a friendly message when the link cannot be sent', async () => {
+    vi.mocked(supabase.auth.signInWithOtp).mockResolvedValueOnce({
       data: {},
-      error: { status: 403, message: 'Token has expired or is invalid' },
+      error: { status: 400, message: 'Invalid email' },
     } as never);
-    const user = await requestCode();
-    await user.type(await screen.findByLabelText('Sign-in code'), '000000');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
-    expect(await screen.findByText(/that code didn't work/i)).toBeInTheDocument();
+    await requestLink();
+    expect(await screen.findByText(/we couldn't send the link/i)).toBeInTheDocument();
   });
 
-  it('tells the person to wait when attempts are rate limited', async () => {
-    vi.mocked(supabase.auth.verifyOtp).mockResolvedValueOnce({
+  it('tells the person to wait when requests are rate limited', async () => {
+    vi.mocked(supabase.auth.signInWithOtp).mockResolvedValueOnce({
       data: {},
       error: { status: 429, message: 'Rate limit exceeded' },
     } as never);
-    const user = await requestCode();
-    await user.type(await screen.findByLabelText('Sign-in code'), '000000');
-    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await requestLink();
     expect(await screen.findByText(/too many attempts/i)).toBeInTheDocument();
   });
 
