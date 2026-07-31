@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
-import logoFullDark from '@/assets/logo-full-dark.png';
-import logoFullLight from '@/assets/logo-full-light.png';
+import logoFullDark from '@/assets/logo-full-dark-4x.png';
+import logoFullLight from '@/assets/logo-full-light-4x.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,7 +24,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   if (loading) return null;
-  if (session) return <Navigate to="/" replace />;
+  if (session) return <Navigate to="/dashboard" replace />;
 
   async function sendMagicLink() {
     setBusy(true);

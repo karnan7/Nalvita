@@ -111,8 +111,13 @@ export const nalvitaStatusColors: Readonly<
   },
 } as const;
 
-/** Font stacks. Plus Jakarta Sans for headings, Inter for UI & body. */
+/**
+ * Font stacks. Plus Jakarta Sans for headings, Inter for UI & body. Bricolage
+ * Grotesque is a display face reserved for large marketing type (landing page);
+ * it is not the in-app heading font.
+ */
 export const nalvitaFonts = {
   heading: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif",
   body: "'Inter', ui-sans-serif, system-ui, sans-serif",
+  display: "'Bricolage Grotesque', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif",
 } as const;
