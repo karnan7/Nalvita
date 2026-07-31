@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Your Nalvita sign-in code</title>
+    <title>Your Nalvita sign-in link</title>
   </head>
   <body style="margin: 0; padding: 32px 16px; background-color: #f4f4f5;">
     <div
@@ -14,18 +14,22 @@
       >
         <span style="color: #dc2626;">&#10084;</span> Nalvita
       </p>
-      <h1 style="margin: 0 0 8px; font-size: 18px;">Your sign-in code</h1>
-      <p style="margin: 0 0 20px; font-size: 14px; line-height: 22px; color: #52525b;">
-        Enter this code in the app to sign in. It works for the next 10 minutes.
+      <h1 style="margin: 0 0 8px; font-size: 18px;">Your sign-in link</h1>
+      <p style="margin: 0 0 24px; font-size: 14px; line-height: 22px; color: #52525b;">
+        Click the button below to sign in. It works for the next 10 minutes on the device you
+        requested it from.
       </p>
-      <div
-        style="margin: 0 0 20px; padding: 18px; text-align: center; background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px;"
-      >
-        <span
-          style="font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: bold; letter-spacing: 8px;"
-          >{{ .Token }}</span
+      <div style="margin: 0 0 24px; text-align: center;">
+        <a
+          href="{{ .ConfirmationURL }}"
+          style="display: inline-block; padding: 12px 28px; background-color: #dc2626; color: #ffffff; font-size: 15px; font-weight: bold; text-decoration: none; border-radius: 8px;"
+          >Sign in to Nalvita</a
         >
       </div>
+      <p style="margin: 0 0 20px; font-size: 12px; line-height: 20px; color: #a1a1aa;">
+        If the button doesn't work, copy and paste this address into your browser:<br />
+        <span style="color: #52525b; word-break: break-all;">{{ .ConfirmationURL }}</span>
+      </p>
       <p style="margin: 0; font-size: 13px; line-height: 20px; color: #52525b;">
         If you didn't try to sign in, you can safely ignore this email — your records stay private
         and nothing will change.

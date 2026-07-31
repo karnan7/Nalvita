@@ -34,14 +34,16 @@ token_verifications = 5
 enable_signup = true
 enable_confirmations = false
 otp_length = 6
-# A sign-in code stays valid for 10 minutes.
+# A sign-in link stays valid for 10 minutes.
 otp_expiry = 600
-# At most one code email per minute per address.
+# At most one sign-in email per minute per address.
 max_frequency = "1m0s"
 
-# signInWithOtp uses the magic-link template; ours shows the 6-digit code.
+# signInWithOtp (passwordless) uses the magic-link template — a click-to-sign-in
+# link. The hosted project can't customize templates without paid custom SMTP,
+# so prod uses Supabase's default magic-link email; this keeps local matching.
 [auth.email.template.magic_link]
-subject = "Your Nalvita sign-in code"
+subject = "Your Nalvita sign-in link"
 content_path = "./supabase/templates/magic_link.html"
 
 # Google OAuth. Local dev needs the env vars from .env.example in your shell;

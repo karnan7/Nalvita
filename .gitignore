@@ -28,4 +28,8 @@ npm-debug.log*
 # Test coverage
 coverage/
 
+# Local agent / skill tooling artifacts
+.agents/
+skills-lock.json
+
 CLAUDE.md

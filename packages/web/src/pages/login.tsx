@@ -18,53 +18,34 @@ function friendlyAuthError(status: number | undefined, fallback: string) {
 export default function LoginPage() {
   const { session, loading } = useAuth();
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
+  const [linkSent, setLinkSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (loading) return null;
   if (session) return <Navigate to="/" replace />;
 
-  async function sendCode() {
+  async function sendMagicLink() {
     setBusy(true);
     setError(null);
     const { error: sendError } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: window.location.origin,
+      },
     });
     setBusy(false);
     if (sendError) {
       setError(
         friendlyAuthError(
           sendError.status,
-          "We couldn't send the code. Please check the email address and try again.",
+          "We couldn't send the link. Please check the email address and try again.",
         ),
       );
       return;
     }
-    setCode('');
-    setCodeSent(true);
-  }
-
-  async function verifyCode() {
-    setBusy(true);
-    setError(null);
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      email,
-      token: code,
-      type: 'email',
-    });
-    setBusy(false);
-    if (verifyError) {
-      setError(
-        friendlyAuthError(
-          verifyError.status,
-          "That code didn't work. Please check the latest email and try again.",
-        ),
-      );
-    }
-    // On success the auth listener picks up the session and we redirect above.
+    setLinkSent(true);
   }
 
   async function signInWithGoogle() {
@@ -94,42 +75,22 @@ export default function LoginPage() {
       </div>
 
       <div className="w-full max-w-sm rounded-lg border p-6 shadow-sm">
-        {codeSent ? (
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void verifyCode();
-            }}
-            className="flex flex-col gap-4"
-          >
+        {linkSent ? (
+          <div className="flex flex-col gap-4">
             <div>
               <h2 className="text-lg font-semibold">Check your email</h2>
               <p className="text-sm text-muted-foreground">
-                We sent a 6-digit code to {email}. Enter it below to sign in.
+                We sent a sign-in link to {email}. Open it on this device to finish signing in. The
+                link works for the next 10 minutes.
               </p>
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="code">Sign-in code</Label>
-              <Input
-                id="code"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                required
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-              />
-            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" disabled={busy}>
-              Sign in
-            </Button>
             <div className="flex justify-between text-sm">
               <button
                 type="button"
                 className="text-muted-foreground underline-offset-4 hover:underline"
                 onClick={() => {
-                  setCodeSent(false);
+                  setLinkSent(false);
                   setError(null);
                 }}
               >
@@ -139,24 +100,24 @@ export default function LoginPage() {
                 type="button"
                 className="text-muted-foreground underline-offset-4 hover:underline"
                 disabled={busy}
-                onClick={() => void sendCode()}
+                onClick={() => void sendMagicLink()}
               >
-                Send a new code
+                Send a new link
               </button>
             </div>
-          </form>
+          </div>
         ) : (
           <div className="flex flex-col gap-4">
             <div>
               <h2 className="text-lg font-semibold">Sign in or create your account</h2>
               <p className="text-sm text-muted-foreground">
-                No password needed — we'll email you a one-time code.
+                No password needed — we'll email you a secure sign-in link.
               </p>
             </div>
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                void sendCode();
+                void sendMagicLink();
               }}
               className="flex flex-col gap-4"
             >
@@ -173,7 +134,7 @@ export default function LoginPage() {
               </div>
               {error && <p className="text-sm text-destructive">{error}</p>}
               <Button type="submit" disabled={busy}>
-                Email me a code
+                Email me a sign-in link
               </Button>
             </form>
             <div className="flex items-center gap-3 text-xs uppercase text-muted-foreground">
