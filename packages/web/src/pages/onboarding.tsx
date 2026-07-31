@@ -29,7 +29,7 @@ export default function OnboardingPage() {
         gender: gender === '' ? null : gender,
         blood_group: bloodGroup === '' ? null : bloodGroup,
       },
-      { onSuccess: () => void navigate('/', { replace: true }) },
+      { onSuccess: () => void navigate('/dashboard', { replace: true }) },
     );
   }
 

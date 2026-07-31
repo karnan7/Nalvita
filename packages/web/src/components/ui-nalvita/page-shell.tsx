@@ -11,8 +11,8 @@ import {
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 
-import logoFullDark from "@/assets/logo-full-dark.png";
-import logoFullLight from "@/assets/logo-full-light.png";
+import logoFullDark from "@/assets/logo-full-dark-4x.png";
+import logoFullLight from "@/assets/logo-full-light-4x.png";
 import { ThemeToggle } from "@/components/ui-nalvita/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useProfile } from "@/lib/profile";
@@ -27,7 +27,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/medicines", label: "Medicines", icon: Pill },
   { to: "/vitals", label: "Vitals", icon: Activity },
@@ -54,11 +54,23 @@ function BrandMark({ compact = false }: Readonly<{ compact?: boolean }>) {
   // Full horizontal lockup (mark + wordmark + "A WELL LIFE" tagline), swapped by
   // theme so it keeps 4.5:1 on either ground. Sized as large as the container
   // comfortably allows so the tagline stays legible.
-  const heightClass = compact ? "h-10 w-auto" : "h-14 w-auto";
+  const heightClass = compact ? "h-10 w-auto" : "h-12 w-auto";
   return (
-    <Link to="/" aria-label="Nalvita home" className="flex items-center">
-      <img src={logoFullLight} alt="" className={cn(heightClass, "dark:hidden")} />
-      <img src={logoFullDark} alt="" className={cn("hidden dark:block", heightClass)} />
+    <Link
+      to="/dashboard"
+      aria-label="Nalvita home"
+      className="flex items-center"
+    >
+      <img
+        src={logoFullLight}
+        alt=""
+        className={cn(heightClass, "dark:hidden")}
+      />
+      <img
+        src={logoFullDark}
+        alt=""
+        className={cn("hidden dark:block", heightClass)}
+      />
     </Link>
   );
 }

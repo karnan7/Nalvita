@@ -14,8 +14,17 @@ function signIn() {
 }
 
 describe('App routing', () => {
-  it('shows the login screen when signed out', async () => {
+  it('shows the marketing landing page at the root when signed out', async () => {
     renderWithProviders(<App />);
+    expect(
+      await screen.findByRole('heading', {
+        name: /your family's entire health history/i,
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the login screen at /login when signed out', async () => {
+    renderWithProviders(<App />, { route: '/login' });
     expect(await screen.findByRole('heading', { name: 'Nalvita' })).toBeInTheDocument();
     expect(screen.getByText('Sign in or create your account')).toBeInTheDocument();
   });

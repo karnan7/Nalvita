@@ -4,6 +4,7 @@ import { AppLayout } from '@/components/app-layout';
 import { RequireAuth } from '@/components/require-auth';
 import DashboardPage from '@/pages/dashboard';
 import DocumentsPage from '@/pages/documents';
+import LandingPage from '@/pages/landing';
 import LoginPage from '@/pages/login';
 import MedicinesPage from '@/pages/medicines';
 import OnboardingPage from '@/pages/onboarding';
@@ -15,11 +16,12 @@ import VitalsPage from '@/pages/vitals';
 export default function App() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route element={<RequireAuth />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<AppLayout />}>
-          <Route index element={<DashboardPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/documents" element={<DocumentsPage />} />
           <Route path="/medicines" element={<MedicinesPage />} />
           <Route path="/vitals" element={<VitalsPage />} />
