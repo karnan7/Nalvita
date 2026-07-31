@@ -1,7 +1,8 @@
-import { HeartPulse } from 'lucide-react';
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 
+import logoFullDark from '@/assets/logo-full-dark.png';
+import logoFullLight from '@/assets/logo-full-light.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -64,10 +65,11 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
       <div className="flex flex-col items-center gap-3">
-        <div className="flex items-center gap-3">
-          <HeartPulse className="size-10 text-destructive" />
-          <h1 className="text-4xl font-bold tracking-tight">Nalvita</h1>
-        </div>
+        <h1 className="flex items-center">
+          <span className="sr-only">Nalvita</span>
+          <img src={logoFullLight} alt="" className="h-20 w-auto dark:hidden" />
+          <img src={logoFullDark} alt="" className="hidden h-20 w-auto dark:block" />
+        </h1>
         <p className="max-w-md text-center text-muted-foreground">
           Your personal health records vault. Documents, medicines, vitals, and history — all in
           one place.

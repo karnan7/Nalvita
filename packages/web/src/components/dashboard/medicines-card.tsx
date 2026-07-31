@@ -1,8 +1,4 @@
-import {
-  CardSkeleton,
-  DashboardCard,
-  EmptyState,
-} from '@/components/dashboard/dashboard-card';
+import { CardSkeleton, EmptyState, SectionCard, StatusBadge } from '@/components/ui-nalvita';
 import { activeMedicines } from '@/lib/dashboard';
 import { isRefillDue, MEDICINE_FREQUENCY_LABELS, useMedicines } from '@/lib/medicines';
 
@@ -11,7 +7,7 @@ export function MedicinesCard() {
   const active = activeMedicines(medicines ?? []).slice(0, 4);
 
   return (
-    <DashboardCard title="Medicines" seeAllTo="/medicines">
+    <SectionCard title="Medicines" seeAllTo="/medicines">
       {isPending && <CardSkeleton />}
       {isError && <EmptyState>We couldn't load your medicines.</EmptyState>}
       {!isPending && !isError && active.length === 0 && (
@@ -23,19 +19,19 @@ export function MedicinesCard() {
             <li key={medicine.id} className="flex items-center gap-2">
               <span className="min-w-0 flex-1 truncate text-sm">
                 <span className="font-medium">{medicine.name}</span>{' '}
-                <span className="text-muted-foreground">
+                <span className="text-content-muted">
                   · {MEDICINE_FREQUENCY_LABELS[medicine.frequency]}
                 </span>
               </span>
               {isRefillDue(medicine) && (
-                <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                <StatusBadge variant="high" className="shrink-0">
                   Refill due
-                </span>
+                </StatusBadge>
               )}
             </li>
           ))}
         </ul>
       )}
-    </DashboardCard>
+    </SectionCard>
   );
 }

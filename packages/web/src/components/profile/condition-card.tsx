@@ -2,9 +2,9 @@ import type { Condition, ConditionStatus } from '@nalvita/core';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
+import { StatusBadge, type StatusVariant } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { cn } from '@/lib/utils';
 import {
   CONDITION_STATUS_LABELS,
   formatConditionDate,
@@ -16,11 +16,10 @@ interface ConditionCardProps {
   onEdit: (condition: Condition) => void;
 }
 
-/** Active = still ongoing (amber), managed = under control (green), resolved = past (neutral). */
-const STATUS_BADGE_CLASS: Record<ConditionStatus, string> = {
-  active: 'bg-amber-100 text-amber-800',
-  managed: 'bg-green-100 text-green-800',
-  resolved: 'bg-muted text-muted-foreground',
+/** Active = still ongoing (amber), managed = under control (green); resolved = past (neutral). */
+const STATUS_VARIANT: Record<Exclude<ConditionStatus, 'resolved'>, StatusVariant> = {
+  active: 'high',
+  managed: 'normal',
 };
 
 export function ConditionCard({ condition, onEdit }: Readonly<ConditionCardProps>) {
@@ -43,14 +42,15 @@ export function ConditionCard({ condition, onEdit }: Readonly<ConditionCardProps
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium">{condition.name}</p>
-          <span
-            className={cn(
-              'rounded-full px-2 py-0.5 text-xs font-medium',
-              STATUS_BADGE_CLASS[condition.status],
-            )}
-          >
-            {CONDITION_STATUS_LABELS[condition.status]}
-          </span>
+          {condition.status === 'resolved' ? (
+            <span className="inline-flex items-center rounded-full bg-sunken px-2 py-0.5 text-xs font-medium text-content-muted">
+              {CONDITION_STATUS_LABELS.resolved}
+            </span>
+          ) : (
+            <StatusBadge variant={STATUS_VARIANT[condition.status]}>
+              {CONDITION_STATUS_LABELS[condition.status]}
+            </StatusBadge>
+          )}
         </div>
         {meta.length > 0 && <p className="text-sm text-muted-foreground">{meta.join(' · ')}</p>}
         {condition.notes && (

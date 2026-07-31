@@ -1,6 +1,4 @@
-import { AlertTriangle } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
+import { AlertBanner } from '@/components/ui-nalvita';
 import { ALLERGY_SEVERITY_LABELS, sortBySeverity, useAllergies } from '@/lib/allergies';
 
 /**
@@ -13,19 +11,10 @@ export function AllergyBanner() {
   if (sorted.length === 0) return null;
 
   return (
-    <Link
-      to="/profile"
-      className="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-destructive transition-colors hover:bg-destructive/15"
-    >
-      <AlertTriangle className="mt-0.5 size-5 shrink-0" />
-      <div className="min-w-0">
-        <p className="font-semibold">Allergies</p>
-        <p className="text-sm">
-          {sorted
-            .map((allergy) => `${allergy.allergen} (${ALLERGY_SEVERITY_LABELS[allergy.severity]})`)
-            .join(', ')}
-        </p>
-      </div>
-    </Link>
+    <AlertBanner title="Allergies" to="/profile">
+      {sorted
+        .map((allergy) => `${allergy.allergen} (${ALLERGY_SEVERITY_LABELS[allergy.severity]})`)
+        .join(', ')}
+    </AlertBanner>
   );
 }

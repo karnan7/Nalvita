@@ -1,8 +1,4 @@
-import {
-  CardSkeleton,
-  DashboardCard,
-  EmptyState,
-} from '@/components/dashboard/dashboard-card';
+import { CardSkeleton, EmptyState, SectionCard } from '@/components/ui-nalvita';
 import { VitalStatusBadge } from '@/components/vitals/vital-status-badge';
 import { latestByVitalType } from '@/lib/dashboard';
 import { formatVitalValue, useVitals, VITAL_TYPE_LABELS, VITAL_UNITS } from '@/lib/vitals';
@@ -12,7 +8,7 @@ export function VitalsCard() {
   const latest = latestByVitalType(vitals ?? []);
 
   return (
-    <DashboardCard title="Vitals — last reading" seeAllTo="/vitals">
+    <SectionCard title="Vitals — last reading" seeAllTo="/vitals">
       {isPending && <CardSkeleton />}
       {isError && <EmptyState>We couldn't load your vitals.</EmptyState>}
       {!isPending && !isError && latest.length === 0 && (
@@ -22,7 +18,7 @@ export function VitalsCard() {
         <ul className="flex flex-col gap-2">
           {latest.map((vital) => (
             <li key={vital.id} className="flex items-center gap-2">
-              <span className="flex-1 text-sm text-muted-foreground">
+              <span className="flex-1 text-sm text-content-muted">
                 {VITAL_TYPE_LABELS[vital.type]}
               </span>
               <span className="text-sm font-medium">
@@ -33,6 +29,6 @@ export function VitalsCard() {
           ))}
         </ul>
       )}
-    </DashboardCard>
+    </SectionCard>
   );
 }
