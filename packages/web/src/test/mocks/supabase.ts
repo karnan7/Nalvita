@@ -19,6 +19,7 @@ export const supabase = {
     signOut: vi.fn(async () => ({ error: null })),
   },
   from: vi.fn(),
+  rpc: vi.fn(),
   storage: { from: vi.fn() },
   // The stub only covers the client surface the app uses; the double cast is
   // the price of not implementing all of SupabaseClient.
@@ -182,6 +183,50 @@ export function makeDoctorRow(overrides: Record<string, unknown> = {}) {
     email: 'clinic@example.com',
     created_at: '2026-07-01T00:00:00.000Z',
     updated_at: '2026-07-01T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+/** A row shaped like `list_circle_people` output (owner-direction by default). */
+export function makeCirclePersonRow(overrides: Record<string, unknown> = {}) {
+  return {
+    membership_id: '00000000-0000-4000-8000-0000000000c9',
+    direction: 'owner',
+    counterpart_id: '00000000-0000-4000-8000-000000000002',
+    counterpart_name: 'Appa',
+    role: 'caregiver',
+    shared_categories: ['medicines', 'vitals'],
+    status: 'active',
+    accepted_at: '2026-07-20T08:00:00.000Z',
+    revoked_at: null,
+    ...overrides,
+  };
+}
+
+/** A pending invite summary row (no secret hashes), as the owner reads it. */
+export function makeInviteRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: '00000000-0000-4000-8000-0000000000a7',
+    owner_id: '00000000-0000-4000-8000-000000000001',
+    invitee_email: 'appa@example.com',
+    requested_role: 'caregiver',
+    requested_categories: ['medicines', 'vitals'],
+    status: 'pending',
+    expires_at: '2026-08-03T08:00:00.000Z',
+    created_at: '2026-08-02T08:00:00.000Z',
+    responded_at: null,
+    ...overrides,
+  };
+}
+
+/** A consent-preview row as `preview_circle_invite` returns it. */
+export function makeInvitePreviewRow(overrides: Record<string, unknown> = {}) {
+  return {
+    owner_id: '00000000-0000-4000-8000-000000000002',
+    owner_name: 'Arjun',
+    requested_role: 'caregiver',
+    requested_categories: ['medicines', 'vitals'],
+    expires_at: '2026-08-03T08:00:00.000Z',
     ...overrides,
   };
 }

@@ -6,6 +6,7 @@ import {
   Search,
   Settings,
   User,
+  Users,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -31,6 +32,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/medicines", label: "Medicines", icon: Pill },
   { to: "/vitals", label: "Vitals", icon: Activity },
+  { to: "/family", label: "Family", icon: Users },
   { to: "/profile", label: "Profile", icon: User },
 ];
 

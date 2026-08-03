@@ -6,6 +6,7 @@ import {
   DOCUMENT_CATEGORIES,
   DOCUMENT_MIME_TYPES,
   GENDERS,
+  INVITE_STATUSES,
   MAX_DOCUMENT_SIZE_BYTES,
   MEDICINE_FREQUENCIES,
   MEDICINE_STATUSES,
@@ -43,6 +44,7 @@ describe('Postgres enums mirror constants.ts', () => {
   const EXPECTED_ENUMS: Record<string, readonly string[]> = {
     blood_group: BLOOD_GROUPS,
     circle_role: CIRCLE_ROLES,
+    invite_status: INVITE_STATUSES,
     membership_status: MEMBERSHIP_STATUSES,
   };
 

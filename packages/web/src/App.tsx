@@ -4,6 +4,8 @@ import { AppLayout } from '@/components/app-layout';
 import { RequireAuth } from '@/components/require-auth';
 import DashboardPage from '@/pages/dashboard';
 import DocumentsPage from '@/pages/documents';
+import FamilyPage from '@/pages/family';
+import JoinInvitePage from '@/pages/join-invite';
 import LandingPage from '@/pages/landing';
 import LoginPage from '@/pages/login';
 import MedicinesPage from '@/pages/medicines';
@@ -18,6 +20,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/family/join" element={<JoinInvitePage />} />
       <Route element={<RequireAuth />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<AppLayout />}>
@@ -26,6 +29,7 @@ export default function App() {
           <Route path="/medicines" element={<MedicinesPage />} />
           <Route path="/vitals" element={<VitalsPage />} />
           <Route path="/timeline" element={<TimelinePage />} />
+          <Route path="/family" element={<FamilyPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
