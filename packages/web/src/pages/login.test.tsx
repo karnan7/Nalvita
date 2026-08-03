@@ -52,4 +52,30 @@ describe('LoginPage', () => {
       options: { redirectTo: window.location.origin },
     });
   });
+
+  it('returns the person to a safe redirect target after sign-in', async () => {
+    const user = userEvent.setup();
+    const redirect = '/family/join?token=tok123';
+    renderWithProviders(<LoginPage />, { route: `/login?redirect=${encodeURIComponent(redirect)}` });
+    await user.type(await screen.findByLabelText('Email address'), 'test.user@example.com');
+    await user.click(screen.getByRole('button', { name: 'Email me a sign-in link' }));
+
+    expect(supabase.auth.signInWithOtp).toHaveBeenCalledWith({
+      email: 'test.user@example.com',
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: `${window.location.origin}${redirect}`,
+      },
+    });
+  });
+
+  it('ignores an off-site redirect target', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<LoginPage />, { route: '/login?redirect=https://evil.example.com' });
+    await user.click(await screen.findByRole('button', { name: 'Continue with Google' }));
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+  });
 });

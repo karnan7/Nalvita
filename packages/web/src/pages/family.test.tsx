@@ -32,6 +32,7 @@ function stubCircle({
     if (table === 'circle_invites') {
       return {
         select: () => ({ eq: () => ({ order: async () => ({ data: invites, error: null }) }) }),
+        delete: () => ({ eq: async () => ({ error: null }) }),
       };
     }
     if (table === 'circle_memberships') {
@@ -77,6 +78,15 @@ describe('FamilyPage', () => {
 
     expect(await screen.findByText('appa@example.com')).toBeInTheDocument();
     expect(screen.getByText('Waiting')).toBeInTheDocument();
+  });
+
+  it('cancels a pending invite', async () => {
+    stubCircle({ invites: [makeInviteRow()] });
+    const user = userEvent.setup();
+    renderWithProviders(<FamilyPage />, { route: '/family' });
+
+    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
+    expect(supabase.from).toHaveBeenCalledWith('circle_invites');
   });
 
   it('gently marks a circle whose access has ended', async () => {

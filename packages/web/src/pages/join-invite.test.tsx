@@ -72,6 +72,21 @@ describe('JoinInvitePage', () => {
     expect(supabase.rpc).toHaveBeenCalledWith('decline_circle_invite', { p_secret: 'tok123' });
   });
 
+  it('lets someone without the link type a 6-digit code', async () => {
+    signedIn();
+    stubRpc({ preview_circle_invite: { data: [makeInvitePreviewRow()], error: null } });
+    const user = userEvent.setup();
+    renderWithProviders(<JoinInvitePage />, { route: '/family/join' });
+
+    await user.type(await screen.findByLabelText('Enter your invite code'), '123456');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+
+    expect(
+      await screen.findByText(/Arjun wants to add you to their Health Circle/),
+    ).toBeInTheDocument();
+    expect(supabase.rpc).toHaveBeenCalledWith('preview_circle_invite', { p_secret: '123456' });
+  });
+
   it('explains when the invite is invalid or expired', async () => {
     signedIn();
     stubRpc({
