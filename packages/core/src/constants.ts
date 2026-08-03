@@ -62,6 +62,16 @@ export type CircleRole = (typeof CIRCLE_ROLES)[number];
 export const MEMBERSHIP_STATUSES = ['pending', 'active', 'revoked'] as const;
 export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
 
+/** Invite lifecycle — mirrors the `invite_status` Postgres enum. */
+export const INVITE_STATUSES = ['pending', 'accepted', 'declined', 'expired'] as const;
+export type InviteStatus = (typeof INVITE_STATUSES)[number];
+
+/** Digits in the manual-entry invite code; the link carries a longer secret. */
+export const INVITE_CODE_LENGTH = 6;
+
+/** How long an invite stays valid — mirrors the `circle_invites.expires_at` default. */
+export const INVITE_TTL_HOURS = 24;
+
 /**
  * Categories a Health Circle membership can share. These match the health
  * table names used by `has_circle_access()`; 'all' is a wildcard.

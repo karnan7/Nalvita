@@ -10,4 +10,5 @@ export * from './schemas/allergy.js';
 export * from './schemas/condition.js';
 export * from './schemas/doctor.js';
 export * from './schemas/circle-membership.js';
+export * from './schemas/circle-invite.js';
 export * from './schemas/audit-log.js';

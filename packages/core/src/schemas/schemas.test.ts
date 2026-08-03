@@ -3,6 +3,7 @@ import { MAX_DOCUMENT_SIZE_BYTES } from '../constants.js';
 import { allergyInsertSchema } from './allergy.js';
 import { auditLogInsertSchema } from './audit-log.js';
 import { circleMembershipInviteSchema } from './circle-membership.js';
+import { circleInviteInsertSchema, circleInvitePreviewSchema } from './circle-invite.js';
 import { conditionInsertSchema } from './condition.js';
 import { doctorInsertSchema } from './doctor.js';
 import { documentInsertSchema } from './document.js';
@@ -132,6 +133,46 @@ describe('circleMembershipInviteSchema', () => {
       shared_categories: ['billing'],
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('circleInviteInsertSchema', () => {
+  const base = {
+    token_hash: 'a'.repeat(64),
+    code_hash: 'b'.repeat(64),
+  };
+
+  it('defaults to a viewer sharing all categories with no email', () => {
+    const result = circleInviteInsertSchema.parse(base);
+    expect(result.requested_role).toBe('viewer');
+    expect(result.requested_categories).toEqual(['all']);
+    expect(result.invitee_email).toBeNull();
+  });
+
+  it('rejects a malformed invitee email', () => {
+    const result = circleInviteInsertSchema.safeParse({ ...base, invitee_email: 'nope' });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an unknown requested category', () => {
+    const result = circleInviteInsertSchema.safeParse({
+      ...base,
+      requested_categories: ['billing'],
+    });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('circleInvitePreviewSchema', () => {
+  it('accepts a preview with a null owner name', () => {
+    const result = circleInvitePreviewSchema.safeParse({
+      owner_id: '11111111-1111-1111-1111-111111111111',
+      owner_name: null,
+      requested_role: 'caregiver',
+      requested_categories: ['medicines', 'vitals'],
+      expires_at: '2026-08-03T10:15:30+00:00',
+    });
+    expect(result.success).toBe(true);
   });
 });
 

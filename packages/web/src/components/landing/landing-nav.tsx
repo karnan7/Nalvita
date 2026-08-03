@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 import logoFullDark from "@/assets/logo-full-dark-4x.png";
 import logoFullLight from "@/assets/logo-full-light-4x.png";
 import { ThemeToggle } from "@/components/ui-nalvita/theme-toggle";
@@ -40,6 +42,9 @@ export function LandingNav() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
+            <Button asChild variant="ghost" size="sm" className="rounded-full px-4">
+              <Link to="/login">Log in</Link>
+            </Button>
             <Button asChild size="sm" className="rounded-full px-5">
               <a href="#waitlist">Join the waitlist</a>
             </Button>

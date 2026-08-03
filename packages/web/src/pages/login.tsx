@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 
 import logoFullDark from '@/assets/logo-full-dark-4x.png';
 import logoFullLight from '@/assets/logo-full-light-4x.png';
@@ -16,15 +16,29 @@ function friendlyAuthError(status: number | undefined, fallback: string) {
   return fallback;
 }
 
+/** Only allow same-app paths as a post-login destination (no open redirects). */
+function safeRedirect(target: string | null): string {
+  if (target && target.startsWith('/') && !target.startsWith('//')) return target;
+  return '/dashboard';
+}
+
 export default function LoginPage() {
   const { session, loading } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirectParam = searchParams.get('redirect');
+  const redirectTo = safeRedirect(redirectParam);
+  // Only steer the post-auth landing when an invite (or similar) asked for it,
+  // so the default magic-link/OAuth flow is unchanged.
+  const returnUrl = redirectParam
+    ? `${window.location.origin}${redirectTo}`
+    : window.location.origin;
   const [email, setEmail] = useState('');
   const [linkSent, setLinkSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (loading) return null;
-  if (session) return <Navigate to="/dashboard" replace />;
+  if (session) return <Navigate to={redirectTo} replace />;
 
   async function sendMagicLink() {
     setBusy(true);
@@ -33,7 +47,7 @@ export default function LoginPage() {
       email,
       options: {
         shouldCreateUser: true,
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: returnUrl,
       },
     });
     setBusy(false);
@@ -54,7 +68,7 @@ export default function LoginPage() {
     setError(null);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: returnUrl },
     });
     if (oauthError) {
       setBusy(false);
