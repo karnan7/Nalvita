@@ -1,18 +1,14 @@
-import { CIRCLE_ROLES, type CircleRole, type ShareCategory } from '@nalvita/core';
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
+import { AccessFields } from '@/components/family/access-fields';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
-import { Select } from '@/components/ui/select';
 import { useAuth } from '@/lib/auth-context';
 import {
-  CIRCLE_ROLE_DESCRIPTIONS,
-  CIRCLE_ROLE_LABELS,
-  SHAREABLE_CATEGORIES,
-  SHARE_CATEGORY_LABELS,
+  isValidSelection,
   useCreateInvite,
   type CreatedInvite,
   type InviteFormValues,
@@ -92,29 +88,9 @@ export function InviteDialog({ open, onClose }: Readonly<InviteDialogProps>) {
     onClose();
   }
 
-  const shareAll = form.categories.includes('all');
-
-  function setRole(role: CircleRole) {
-    setForm((prev) => ({ ...prev, role }));
-  }
-
-  function toggleAll() {
-    setForm((prev) => ({ ...prev, categories: shareAll ? [] : ['all'] }));
-  }
-
-  function toggleCategory(category: ShareCategory) {
-    setForm((prev) => {
-      const withoutAll: ShareCategory[] = prev.categories.filter((c) => c !== 'all');
-      const next = withoutAll.includes(category)
-        ? withoutAll.filter((c) => c !== category)
-        : [...withoutAll, category];
-      return { ...prev, categories: next };
-    });
-  }
-
   function submit(event: SyntheticEvent) {
     event.preventDefault();
-    if (form.categories.length === 0) return;
+    if (!isValidSelection(form)) return;
     create.mutate(form, { onSuccess: setCreated });
   }
 
@@ -128,43 +104,11 @@ export function InviteDialog({ open, onClose }: Readonly<InviteDialogProps>) {
         <CreatedInviteView invite={created} onDone={handleClose} />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="invite-role">What they can do</Label>
-            <Select
-              id="invite-role"
-              value={form.role}
-              onChange={(event) => setRole(event.target.value as CircleRole)}
-            >
-              {CIRCLE_ROLES.map((role) => (
-                <option key={role} value={role}>
-                  {CIRCLE_ROLE_LABELS[role]}
-                </option>
-              ))}
-            </Select>
-            <p className="text-sm text-content-muted">{CIRCLE_ROLE_DESCRIPTIONS[form.role]}</p>
-          </div>
-
-          <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-sm font-medium text-content">What to share</legend>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" className="size-4" checked={shareAll} onChange={toggleAll} />
-              {SHARE_CATEGORY_LABELS.all}
-            </label>
-            <div className="mt-1 grid grid-cols-2 gap-2">
-              {SHAREABLE_CATEGORIES.map((category) => (
-                <label key={category} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="size-4"
-                    disabled={shareAll}
-                    checked={shareAll || form.categories.includes(category)}
-                    onChange={() => toggleCategory(category)}
-                  />
-                  {SHARE_CATEGORY_LABELS[category]}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          <AccessFields
+            idPrefix="invite"
+            value={form}
+            onChange={(next) => setForm((prev) => ({ ...prev, ...next }))}
+          />
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="invite-email">Their email (optional)</Label>
@@ -185,7 +129,7 @@ export function InviteDialog({ open, onClose }: Readonly<InviteDialogProps>) {
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={create.isPending || form.categories.length === 0}>
+            <Button type="submit" disabled={create.isPending || !isValidSelection(form)}>
               {create.isPending ? 'Creating…' : 'Create invite'}
             </Button>
           </div>

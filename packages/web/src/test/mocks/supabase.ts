@@ -231,6 +231,21 @@ export function makeInvitePreviewRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** A row shaped like `list_audit_feed` output. */
+export function makeAuditFeedRow(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    actor_id: '00000000-0000-4000-8000-000000000002',
+    actor_name: 'Appa',
+    action: 'viewed',
+    resource_type: 'documents',
+    resource_id: '00000000-0000-4000-8000-0000000000d1',
+    resource_label: 'Blood test report',
+    created_at: '2026-08-04T08:00:00.000Z',
+    ...overrides,
+  };
+}
+
 interface TableFixtures {
   profiles?: Record<string, unknown>;
   allergies?: Record<string, unknown>[];

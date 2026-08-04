@@ -7,6 +7,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const conditionListSchema = z.array(conditionSchema);
@@ -75,7 +76,7 @@ export function useAddCondition(userId: string) {
       if (error) throw error;
       return conditionSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conditions'] }),
+    onSuccess: auditedInvalidate(queryClient, 'added', 'conditions'),
   });
 }
 
@@ -99,7 +100,7 @@ export function useUpdateCondition() {
       if (error) throw error;
       return conditionSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conditions'] }),
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'conditions'),
   });
 }
 
@@ -107,10 +108,7 @@ export function useUpdateCondition() {
 export function useDeleteCondition() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase.from('conditions').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conditions'] }),
+    mutationFn: (id: string) => deleteAuditedRecord('conditions', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'conditions'),
   });
 }

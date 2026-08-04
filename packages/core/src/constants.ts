@@ -73,6 +73,31 @@ export const INVITE_CODE_LENGTH = 6;
 export const INVITE_TTL_HOURS = 24;
 
 /**
+ * Verbs the activity feed understands — mirrors the allow-list in the
+ * `log_audit_event()` SQL function. 'joined_circle' is written by the database
+ * when an invite is accepted; the rest come from the app.
+ */
+export const AUDIT_ACTIONS = [
+  'viewed',
+  'added',
+  'updated',
+  'deleted',
+  'sent_reminder',
+  'joined_circle',
+] as const;
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
+
+/** Actions the app itself may log; 'joined_circle' is database-only. */
+export const LOGGABLE_AUDIT_ACTIONS = [
+  'viewed',
+  'added',
+  'updated',
+  'deleted',
+  'sent_reminder',
+] as const;
+export type LoggableAuditAction = (typeof LOGGABLE_AUDIT_ACTIONS)[number];
+
+/**
  * Categories a Health Circle membership can share. These match the health
  * table names used by `has_circle_access()`; 'all' is a wildcard.
  */

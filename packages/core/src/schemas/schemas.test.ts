@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_DOCUMENT_SIZE_BYTES } from '../constants.js';
 import { allergyInsertSchema } from './allergy.js';
-import { auditLogInsertSchema } from './audit-log.js';
+import { auditEventSchema, auditFeedEntrySchema, auditLogInsertSchema } from './audit-log.js';
 import { circleMembershipInviteSchema } from './circle-membership.js';
 import { circleInviteInsertSchema, circleInvitePreviewSchema } from './circle-invite.js';
 import { conditionInsertSchema } from './condition.js';
@@ -195,6 +195,53 @@ describe('auditLogInsertSchema', () => {
       resource_id: null,
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe('auditEventSchema', () => {
+  const base = {
+    owner_id: '11111111-1111-1111-1111-111111111111',
+    action: 'viewed',
+    resource_type: 'documents',
+  };
+
+  it('defaults resource_id to null', () => {
+    expect(auditEventSchema.parse(base).resource_id).toBeNull();
+  });
+
+  it('rejects a verb outside the shared vocabulary', () => {
+    expect(auditEventSchema.safeParse({ ...base, action: 'tampered' }).success).toBe(false);
+  });
+
+  it("rejects 'all', which is a permission wildcard and not a record type", () => {
+    expect(auditEventSchema.safeParse({ ...base, resource_type: 'all' }).success).toBe(false);
+  });
+});
+
+describe('auditFeedEntrySchema', () => {
+  const entry = {
+    id: 12,
+    actor_id: '22222222-2222-2222-2222-222222222222',
+    actor_name: 'Arjun',
+    action: 'viewed',
+    resource_type: 'documents',
+    resource_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    resource_label: 'Chest X-ray',
+    created_at: '2026-08-04T09:15:30+00:00',
+  };
+
+  it('accepts a resolved feed entry', () => {
+    expect(auditFeedEntrySchema.safeParse(entry).success).toBe(true);
+  });
+
+  it('accepts a deleted record, whose label no longer resolves', () => {
+    expect(auditFeedEntrySchema.safeParse({ ...entry, resource_label: null }).success).toBe(true);
+  });
+
+  it('still parses entries written before the verb vocabulary existed', () => {
+    expect(auditFeedEntrySchema.safeParse({ ...entry, action: 'viewed_document' }).success).toBe(
+      true,
+    );
   });
 });
 

@@ -9,6 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const vitalListSchema = z.array(vitalSchema);
@@ -129,7 +130,7 @@ export function useLogVital(userId: string) {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vitals'] }),
+    onSuccess: auditedInvalidate(queryClient, 'added', 'vitals'),
   });
 }
 
@@ -153,7 +154,7 @@ export function useUpdateVital() {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vitals'] }),
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'vitals'),
   });
 }
 
@@ -161,10 +162,7 @@ export function useUpdateVital() {
 export function useDeleteVital() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase.from('vitals').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vitals'] }),
+    mutationFn: (id: string) => deleteAuditedRecord('vitals', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'vitals'),
   });
 }

@@ -2,6 +2,7 @@ import { doctorInsertSchema, doctorSchema, type Doctor } from '@nalvita/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const doctorListSchema = z.array(doctorSchema);
@@ -54,7 +55,7 @@ export function useAddDoctor(userId: string) {
       if (error) throw error;
       return doctorSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['doctors'] }),
+    onSuccess: auditedInvalidate(queryClient, 'added', 'doctors'),
   });
 }
 
@@ -78,7 +79,7 @@ export function useUpdateDoctor() {
       if (error) throw error;
       return doctorSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['doctors'] }),
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'doctors'),
   });
 }
 
@@ -86,10 +87,7 @@ export function useUpdateDoctor() {
 export function useDeleteDoctor() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase.from('doctors').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['doctors'] }),
+    mutationFn: (id: string) => deleteAuditedRecord('doctors', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'doctors'),
   });
 }

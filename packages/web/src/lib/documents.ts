@@ -10,6 +10,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { auditedInvalidate } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const BUCKET = 'health-documents';
@@ -132,7 +133,7 @@ export function useUploadDocument(userId: string) {
       }
       return documentSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+    onSuccess: auditedInvalidate(queryClient, 'added', 'documents'),
   });
 }
 
@@ -140,13 +141,14 @@ export function useUploadDocument(userId: string) {
 export function useDeleteDocument() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (document: Document): Promise<void> => {
+    mutationFn: async (document: Document): Promise<Document> => {
       const { error } = await supabase.from('documents').delete().eq('id', document.id);
       if (error) throw error;
       // Row is the source of truth for the list; remove the file best-effort after.
       await supabase.storage.from(BUCKET).remove([document.file_path]);
+      return document;
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents'] }),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'documents'),
   });
 }
 

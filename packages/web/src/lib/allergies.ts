@@ -7,6 +7,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const allergyListSchema = z.array(allergySchema);
@@ -74,7 +75,7 @@ export function useAddAllergy(userId: string) {
       if (error) throw error;
       return allergySchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allergies'] }),
+    onSuccess: auditedInvalidate(queryClient, 'added', 'allergies'),
   });
 }
 
@@ -98,7 +99,7 @@ export function useUpdateAllergy() {
       if (error) throw error;
       return allergySchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allergies'] }),
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'allergies'),
   });
 }
 
@@ -106,10 +107,7 @@ export function useUpdateAllergy() {
 export function useDeleteAllergy() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase.from('allergies').delete().eq('id', id);
-      if (error) throw error;
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['allergies'] }),
+    mutationFn: (id: string) => deleteAuditedRecord('allergies', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'allergies'),
   });
 }
