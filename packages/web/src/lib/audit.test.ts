@@ -1,9 +1,12 @@
 import type { AuditFeedEntry } from '@nalvita/core';
+import { QueryClient } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   actorName,
   auditRecord,
+  auditedInvalidate,
+  deleteAuditedRecord,
   describeAuditEntry,
   formatActivityDay,
   groupByDay,
@@ -148,5 +151,53 @@ describe('logAuditEvent', () => {
       'log_audit_event',
       expect.objectContaining({ p_owner: OWNER, p_action: 'updated' }),
     );
+  });
+});
+
+describe('deleteAuditedRecord', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('selects the owner back from the deleted row', async () => {
+    const single = vi.fn(async () => ({ data: { id: RECORD, user_id: OWNER }, error: null }));
+    vi.mocked(supabase.from).mockReturnValue({
+      delete: () => ({ eq: () => ({ select: () => ({ single }) }) }),
+    } as never);
+
+    await expect(deleteAuditedRecord('vitals', RECORD)).resolves.toEqual({
+      id: RECORD,
+      user_id: OWNER,
+    });
+    expect(supabase.from).toHaveBeenCalledWith('vitals');
+  });
+
+  it('surfaces a refused delete instead of logging one that never happened', async () => {
+    const single = vi.fn(async () => ({ data: null, error: { code: '42501' } }));
+    vi.mocked(supabase.from).mockReturnValue({
+      delete: () => ({ eq: () => ({ select: () => ({ single }) }) }),
+    } as never);
+
+    await expect(deleteAuditedRecord('vitals', RECORD)).rejects.toMatchObject({ code: '42501' });
+  });
+});
+
+describe('auditedInvalidate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(supabase.rpc).mockResolvedValue({ data: null, error: null } as never);
+  });
+
+  it("logs the action and refreshes that table's list", async () => {
+    const queryClient = new QueryClient();
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
+
+    await auditedInvalidate(queryClient, 'deleted', 'allergies')({ id: RECORD, user_id: OWNER });
+
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      'log_audit_event',
+      expect.objectContaining({ p_action: 'deleted', p_resource_type: 'allergies' }),
+    );
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['allergies'] });
   });
 });

@@ -7,7 +7,7 @@ import {
   type ShareCategory,
   type VitalType,
 } from '@nalvita/core';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { supabase } from '@/lib/supabase';
@@ -76,6 +76,40 @@ export function auditRecord(
     resource_type: resourceType,
     resource_id: row.id,
   });
+}
+
+/**
+ * Deletes a record and hands back just enough of it to say whose it was — the
+ * row is gone by the time the mutation's `onSuccess` runs, so the audit entry
+ * would otherwise have no owner to attribute it to.
+ */
+export async function deleteAuditedRecord(
+  table: AuditResourceType,
+  id: string,
+): Promise<AuditableRow> {
+  const { data, error } = await supabase
+    .from(table)
+    .delete()
+    .eq('id', id)
+    .select('id,user_id')
+    .single();
+  if (error) throw error;
+  return auditableRowSchema.parse(data);
+}
+
+/**
+ * The `onSuccess` every audited record mutation wants: log what was done, then
+ * refresh that table's list. Query keys are the table name throughout.
+ */
+export function auditedInvalidate<T extends AuditableRow>(
+  queryClient: QueryClient,
+  action: LoggableAuditAction,
+  table: AuditResourceType,
+): (row: T) => Promise<void> {
+  return (row) => {
+    auditRecord(action, table, row);
+    return queryClient.invalidateQueries({ queryKey: [table] });
+  };
 }
 
 interface FeedCursor {

@@ -9,7 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditRecord, auditableRowSchema, type AuditableRow } from '@/lib/audit';
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const vitalListSchema = z.array(vitalSchema);
@@ -130,10 +130,7 @@ export function useLogVital(userId: string) {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: (vital) => {
-      auditRecord('added', 'vitals', vital);
-      return queryClient.invalidateQueries({ queryKey: ['vitals'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'added', 'vitals'),
   });
 }
 
@@ -157,10 +154,7 @@ export function useUpdateVital() {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: (vital) => {
-      auditRecord('updated', 'vitals', vital);
-      return queryClient.invalidateQueries({ queryKey: ['vitals'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'vitals'),
   });
 }
 
@@ -168,21 +162,7 @@ export function useUpdateVital() {
 export function useDeleteVital() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<AuditableRow> => {
-      // The row is gone by the time onSuccess runs, so select back the bit the
-      // audit entry needs: whose record it was.
-      const { data, error } = await supabase
-        .from('vitals')
-        .delete()
-        .eq('id', id)
-        .select('id,user_id')
-        .single();
-      if (error) throw error;
-      return auditableRowSchema.parse(data);
-    },
-    onSuccess: (row) => {
-      auditRecord('deleted', 'vitals', row);
-      return queryClient.invalidateQueries({ queryKey: ['vitals'] });
-    },
+    mutationFn: (id: string) => deleteAuditedRecord('vitals', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'vitals'),
   });
 }

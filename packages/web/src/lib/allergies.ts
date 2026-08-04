@@ -7,7 +7,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditRecord, auditableRowSchema, type AuditableRow } from '@/lib/audit';
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const allergyListSchema = z.array(allergySchema);
@@ -75,10 +75,7 @@ export function useAddAllergy(userId: string) {
       if (error) throw error;
       return allergySchema.parse(data);
     },
-    onSuccess: (allergy) => {
-      auditRecord('added', 'allergies', allergy);
-      return queryClient.invalidateQueries({ queryKey: ['allergies'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'added', 'allergies'),
   });
 }
 
@@ -102,10 +99,7 @@ export function useUpdateAllergy() {
       if (error) throw error;
       return allergySchema.parse(data);
     },
-    onSuccess: (allergy) => {
-      auditRecord('updated', 'allergies', allergy);
-      return queryClient.invalidateQueries({ queryKey: ['allergies'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'allergies'),
   });
 }
 
@@ -113,21 +107,7 @@ export function useUpdateAllergy() {
 export function useDeleteAllergy() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<AuditableRow> => {
-      // The row is gone by the time onSuccess runs, so select back the bit the
-      // audit entry needs: whose record it was.
-      const { data, error } = await supabase
-        .from('allergies')
-        .delete()
-        .eq('id', id)
-        .select('id,user_id')
-        .single();
-      if (error) throw error;
-      return auditableRowSchema.parse(data);
-    },
-    onSuccess: (row) => {
-      auditRecord('deleted', 'allergies', row);
-      return queryClient.invalidateQueries({ queryKey: ['allergies'] });
-    },
+    mutationFn: (id: string) => deleteAuditedRecord('allergies', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'allergies'),
   });
 }

@@ -7,7 +7,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditRecord, auditableRowSchema, type AuditableRow } from '@/lib/audit';
+import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const conditionListSchema = z.array(conditionSchema);
@@ -76,10 +76,7 @@ export function useAddCondition(userId: string) {
       if (error) throw error;
       return conditionSchema.parse(data);
     },
-    onSuccess: (condition) => {
-      auditRecord('added', 'conditions', condition);
-      return queryClient.invalidateQueries({ queryKey: ['conditions'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'added', 'conditions'),
   });
 }
 
@@ -103,10 +100,7 @@ export function useUpdateCondition() {
       if (error) throw error;
       return conditionSchema.parse(data);
     },
-    onSuccess: (condition) => {
-      auditRecord('updated', 'conditions', condition);
-      return queryClient.invalidateQueries({ queryKey: ['conditions'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'conditions'),
   });
 }
 
@@ -114,21 +108,7 @@ export function useUpdateCondition() {
 export function useDeleteCondition() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<AuditableRow> => {
-      // The row is gone by the time onSuccess runs, so select back the bit the
-      // audit entry needs: whose record it was.
-      const { data, error } = await supabase
-        .from('conditions')
-        .delete()
-        .eq('id', id)
-        .select('id,user_id')
-        .single();
-      if (error) throw error;
-      return auditableRowSchema.parse(data);
-    },
-    onSuccess: (row) => {
-      auditRecord('deleted', 'conditions', row);
-      return queryClient.invalidateQueries({ queryKey: ['conditions'] });
-    },
+    mutationFn: (id: string) => deleteAuditedRecord('conditions', id),
+    onSuccess: auditedInvalidate(queryClient, 'deleted', 'conditions'),
   });
 }

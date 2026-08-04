@@ -8,7 +8,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditRecord } from '@/lib/audit';
+import { auditedInvalidate } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 /** Show a refill reminder once the refill date is this many days away (or overdue). */
@@ -123,10 +123,7 @@ export function useAddMedicine(userId: string) {
       if (error) throw error;
       return medicineSchema.parse(data);
     },
-    onSuccess: (medicine) => {
-      auditRecord('added', 'medicines', medicine);
-      return queryClient.invalidateQueries({ queryKey: ['medicines'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'added', 'medicines'),
   });
 }
 
@@ -150,10 +147,7 @@ export function useUpdateMedicine() {
       if (error) throw error;
       return medicineSchema.parse(data);
     },
-    onSuccess: (medicine) => {
-      auditRecord('updated', 'medicines', medicine);
-      return queryClient.invalidateQueries({ queryKey: ['medicines'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'medicines'),
   });
 }
 
@@ -171,9 +165,6 @@ export function useStopMedicine() {
       if (error) throw error;
       return medicineSchema.parse(data);
     },
-    onSuccess: (medicine) => {
-      auditRecord('updated', 'medicines', medicine);
-      return queryClient.invalidateQueries({ queryKey: ['medicines'] });
-    },
+    onSuccess: auditedInvalidate(queryClient, 'updated', 'medicines'),
   });
 }
