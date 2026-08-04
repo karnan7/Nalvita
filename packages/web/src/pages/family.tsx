@@ -2,9 +2,12 @@ import type { CirclePerson } from '@nalvita/core';
 import { Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
+import { ActivityFeed } from '@/components/family/activity-feed';
 import { InviteDialog } from '@/components/family/invite-dialog';
+import { ManageAccessDialog } from '@/components/family/manage-access-dialog';
 import { EmptyState, SectionCard, StatusBadge } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
+import { Modal } from '@/components/ui/modal';
 import {
   CIRCLE_ROLE_LABELS,
   describeCategories,
@@ -18,10 +21,29 @@ function displayName(name: string | null): string {
   return name?.trim() || 'Family member';
 }
 
-/** A person who has access to my records, with a one-tap revoke. */
-function MemberRow({ person }: Readonly<{ person: CirclePerson }>) {
-  const revoke = useRevokeMembership();
+/** "Sharing since 20 Jul 2026" — the date the person accepted. */
+function sinceLabel(accepted_at: string | null): string | null {
+  if (!accepted_at) return null;
+  const date = new Date(accepted_at).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+  return `Sharing since ${date}`;
+}
+
+/** A person who has access to my records: what they can see, and how to change it. */
+function MemberRow({
+  person,
+  onManage,
+  onRevoke,
+}: Readonly<{
+  person: CirclePerson;
+  onManage: (person: CirclePerson) => void;
+  onRevoke: (person: CirclePerson) => void;
+}>) {
   const isRevoked = person.status === 'revoked';
+  const since = sinceLabel(person.accepted_at);
 
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-subtle bg-app px-4 py-3">
@@ -30,18 +52,19 @@ function MemberRow({ person }: Readonly<{ person: CirclePerson }>) {
         <p className="text-sm text-content-muted">
           {CIRCLE_ROLE_LABELS[person.role]} · {describeCategories(person.shared_categories)}
         </p>
+        {since && <p className="text-xs text-content-muted">{since}</p>}
       </div>
       {isRevoked ? (
         <StatusBadge variant="critical">Access ended</StatusBadge>
       ) : (
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={revoke.isPending}
-          onClick={() => revoke.mutate(person.membership_id)}
-        >
-          Remove access
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => onManage(person)}>
+            Change access
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => onRevoke(person)}>
+            Remove access
+          </Button>
+        </div>
       )}
     </li>
   );
@@ -67,6 +90,44 @@ function MembershipRow({ person }: Readonly<{ person: CirclePerson }>) {
   );
 }
 
+/** Removing someone is instant and one-sided, so it always asks first. */
+function RevokeConfirm({
+  person,
+  onClose,
+}: Readonly<{ person: CirclePerson | null; onClose: () => void }>) {
+  const revoke = useRevokeMembership();
+  const name = person ? displayName(person.counterpart_name) : '';
+
+  function confirm() {
+    if (!person) return;
+    revoke.mutate(person.membership_id, { onSuccess: onClose });
+  }
+
+  return (
+    <Modal open={person !== null} onClose={onClose} title="Remove access?">
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-content-secondary">
+          {name} will no longer be able to see or add anything in your account. You can invite them
+          again later.
+        </p>
+        {revoke.isError && (
+          <p className="text-sm text-destructive">
+            We couldn&apos;t remove this person. Please try again.
+          </p>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Keep access
+          </Button>
+          <Button type="button" disabled={revoke.isPending} onClick={confirm}>
+            {revoke.isPending ? 'Removing…' : 'Remove access'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 function PendingInvites() {
   const { data: invites } = usePendingInvites();
   const cancel = useCancelInvite();
@@ -82,9 +143,7 @@ function PendingInvites() {
             className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border-subtle bg-app px-4 py-3"
           >
             <div className="min-w-0">
-              <p className="font-medium text-content">
-                {invite.invitee_email ?? 'Invite link'}
-              </p>
+              <p className="font-medium text-content">{invite.invitee_email ?? 'Invite link'}</p>
               <p className="text-sm text-content-muted">
                 {CIRCLE_ROLE_LABELS[invite.requested_role]} ·{' '}
                 {describeCategories(invite.requested_categories)}
@@ -111,11 +170,10 @@ function PendingInvites() {
 export default function FamilyPage() {
   const { data: people, isPending, isError } = useCirclePeople();
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [managing, setManaging] = useState<CirclePerson | null>(null);
+  const [revoking, setRevoking] = useState<CirclePerson | null>(null);
 
-  const myCircle = useMemo(
-    () => (people ?? []).filter((p) => p.direction === 'owner'),
-    [people],
-  );
+  const myCircle = useMemo(() => (people ?? []).filter((p) => p.direction === 'owner'), [people]);
   const circlesImIn = useMemo(
     () => (people ?? []).filter((p) => p.direction === 'member'),
     [people],
@@ -155,7 +213,12 @@ export default function FamilyPage() {
             ) : (
               <ul className="flex flex-col gap-2">
                 {myCircle.map((person) => (
-                  <MemberRow key={person.membership_id} person={person} />
+                  <MemberRow
+                    key={person.membership_id}
+                    person={person}
+                    onManage={setManaging}
+                    onRevoke={setRevoking}
+                  />
                 ))}
               </ul>
             )}
@@ -170,10 +233,14 @@ export default function FamilyPage() {
               </ul>
             </SectionCard>
           )}
+
+          <ActivityFeed />
         </>
       )}
 
       <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
+      <ManageAccessDialog person={managing} onClose={() => setManaging(null)} />
+      <RevokeConfirm person={revoking} onClose={() => setRevoking(null)} />
     </div>
   );
 }

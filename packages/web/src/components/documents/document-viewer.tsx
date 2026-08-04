@@ -3,6 +3,7 @@ import { Download, X } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { auditRecord } from '@/lib/audit';
 import { downloadDocument, isPdf, useSignedUrl } from '@/lib/documents';
 
 interface DocumentViewerProps {
@@ -26,6 +27,12 @@ function ViewerBody({ doc }: Readonly<{ doc: Document }>) {
 }
 
 export function DocumentViewer({ doc, onClose }: Readonly<DocumentViewerProps>) {
+  // Opening someone else's document is the action their feed cares about, so it
+  // is logged here rather than on the signed-URL fetch (which also refreshes).
+  useEffect(() => {
+    auditRecord('viewed', 'documents', doc);
+  }, [doc]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose();

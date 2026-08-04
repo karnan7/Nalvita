@@ -58,6 +58,32 @@ export function describeCategories(categories: readonly ShareCategory[]): string
   return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
 }
 
+/** What one person in a circle is allowed to do, as the access form models it. */
+export interface AccessSelection {
+  role: CircleRole;
+  categories: ShareCategory[];
+}
+
+/** Whether a selection is complete enough to save — sharing nothing is not access. */
+export function isValidSelection(value: AccessSelection): boolean {
+  return value.categories.length > 0;
+}
+
+/** Applies "share everything" as a single wildcard rather than every box ticked. */
+export function toggleAllCategories(value: AccessSelection): AccessSelection {
+  const shareAll = value.categories.includes('all');
+  return { ...value, categories: shareAll ? [] : ['all'] };
+}
+
+/** Ticking a specific category clears the wildcard, so the two never disagree. */
+export function toggleCategory(value: AccessSelection, category: ShareCategory): AccessSelection {
+  const withoutAll: ShareCategory[] = value.categories.filter((c) => c !== 'all');
+  const categories = withoutAll.includes(category)
+    ? withoutAll.filter((c) => c !== category)
+    : [...withoutAll, category];
+  return { ...value, categories };
+}
+
 const PEOPLE_KEY = ['circle-people'];
 const INVITES_KEY = ['circle-invites'];
 
@@ -185,6 +211,31 @@ export function useCancelInvite() {
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: INVITES_KEY }),
+  });
+}
+
+export interface MembershipChange {
+  membershipId: string;
+  role: CircleRole;
+  categories: ShareCategory[];
+}
+
+/**
+ * Changes what a member can do and see. Both directions take effect on the next
+ * request — RLS reads the membership row on every check, so a downgrade needs
+ * no re-consent and no session refresh.
+ */
+export function useUpdateMembership() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ membershipId, role, categories }: MembershipChange): Promise<void> => {
+      const { error } = await supabase
+        .from('circle_memberships')
+        .update({ role, shared_categories: categories })
+        .eq('id', membershipId);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PEOPLE_KEY }),
   });
 }
 

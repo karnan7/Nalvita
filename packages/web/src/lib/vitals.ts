@@ -9,6 +9,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { auditRecord, auditableRowSchema, type AuditableRow } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 const vitalListSchema = z.array(vitalSchema);
@@ -129,7 +130,10 @@ export function useLogVital(userId: string) {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vitals'] }),
+    onSuccess: (vital) => {
+      auditRecord('added', 'vitals', vital);
+      return queryClient.invalidateQueries({ queryKey: ['vitals'] });
+    },
   });
 }
 
@@ -153,7 +157,10 @@ export function useUpdateVital() {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vitals'] }),
+    onSuccess: (vital) => {
+      auditRecord('updated', 'vitals', vital);
+      return queryClient.invalidateQueries({ queryKey: ['vitals'] });
+    },
   });
 }
 
@@ -161,10 +168,21 @@ export function useUpdateVital() {
 export function useDeleteVital() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string): Promise<void> => {
-      const { error } = await supabase.from('vitals').delete().eq('id', id);
+    mutationFn: async (id: string): Promise<AuditableRow> => {
+      // The row is gone by the time onSuccess runs, so select back the bit the
+      // audit entry needs: whose record it was.
+      const { data, error } = await supabase
+        .from('vitals')
+        .delete()
+        .eq('id', id)
+        .select('id,user_id')
+        .single();
       if (error) throw error;
+      return auditableRowSchema.parse(data);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['vitals'] }),
+    onSuccess: (row) => {
+      auditRecord('deleted', 'vitals', row);
+      return queryClient.invalidateQueries({ queryKey: ['vitals'] });
+    },
   });
 }

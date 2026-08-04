@@ -7,6 +7,7 @@ import {
 } from '@nalvita/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { auditRecord } from '@/lib/audit';
 import { supabase } from '@/lib/supabase';
 
 /** User-facing names for each gender (DB values are snake_case). */
@@ -69,6 +70,7 @@ export function useUpdateProfile(userId: string) {
       return profileSchema.parse(data);
     },
     onSuccess: (profile) => {
+      auditRecord('updated', 'profiles', profile);
       queryClient.setQueryData(['profile', userId], profile);
     },
   });
