@@ -7,6 +7,7 @@ import MedicinesPage from '@/pages/medicines';
 import { supabase } from '@/lib/supabase';
 import {
   listBuilder,
+  rowBuilder,
   makeCirclePersonRow,
   makeMedicineRow,
   makeProfileRow,
@@ -43,14 +44,7 @@ function stub(role: 'viewer' | 'caregiver' | 'manager') {
   vi.mocked(supabase.from).mockImplementation(((table: string) => {
     if (table === 'profiles') {
       const row = makeProfileRow({ user_id: APPA });
-      return {
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: row, error: null }),
-            maybeSingle: async () => ({ data: row, error: null }),
-          }),
-        }),
-      };
+      return rowBuilder(row);
     }
     if (table === 'medicines') return listBuilder([makeMedicineRow({ user_id: APPA })]);
     return listBuilder([]);

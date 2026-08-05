@@ -7,6 +7,7 @@ import { ViewingAsBanner } from '@/components/family/viewing-as-banner';
 import { supabase } from '@/lib/supabase';
 import {
   listBuilder,
+  rowBuilder,
   makeCirclePersonRow,
   makeMedicineRow,
   makeProfileRow,
@@ -49,14 +50,7 @@ function stubFamily({
   vi.mocked(supabase.from).mockImplementation(((table: string) => {
     if (table === 'profiles') {
       const row = makeProfileRow({ user_id: APPA, date_of_birth: '1962-04-01' });
-      return {
-        select: () => ({
-          eq: () => ({
-            single: async () => ({ data: row, error: null }),
-            maybeSingle: async () => ({ data: row, error: null }),
-          }),
-        }),
-      };
+      return rowBuilder(row);
     }
     if (table === 'medicines') return listBuilder(medicines);
     if (table === 'vitals') return listBuilder(vitals);
