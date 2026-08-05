@@ -6,6 +6,7 @@ import { VitalChart } from '@/components/vitals/vital-chart';
 import { VitalHistoryTable } from '@/components/vitals/vital-history-table';
 import { VitalLogDialog } from '@/components/vitals/vital-log-dialog';
 import { Button } from '@/components/ui/button';
+import { useRecordPermissions } from '@/lib/circle';
 import { cn } from '@/lib/utils';
 import { exportVitalsPdf } from '@/lib/vitals-pdf';
 import { useVitals, VITAL_TYPE_LABELS } from '@/lib/vitals';
@@ -64,6 +65,7 @@ function RangeToggle({
 
 export default function VitalsPage() {
   const { data: vitals, isPending, isError } = useVitals();
+  const { canWrite, canDelete, guardWrite } = useRecordPermissions();
   const [type, setType] = useState<VitalType>('blood_pressure');
   const [days, setDays] = useState<number>(30);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -75,13 +77,17 @@ export default function VitalsPage() {
   );
 
   function openLog() {
-    setEditing(null);
-    setDialogOpen(true);
+    guardWrite(() => {
+      setEditing(null);
+      setDialogOpen(true);
+    });
   }
 
   function openEdit(vital: Vital) {
-    setEditing(vital);
-    setDialogOpen(true);
+    guardWrite(() => {
+      setEditing(vital);
+      setDialogOpen(true);
+    });
   }
 
   return (
@@ -97,10 +103,12 @@ export default function VitalsPage() {
             <Download />
             Export PDF
           </Button>
-          <Button onClick={openLog}>
-            <Plus />
-            Log vitals
-          </Button>
+          {canWrite && (
+            <Button onClick={openLog}>
+              <Plus />
+              Log vitals
+            </Button>
+          )}
         </div>
       </div>
 
@@ -128,7 +136,11 @@ export default function VitalsPage() {
               No {VITAL_TYPE_LABELS[type].toLowerCase()} readings yet. Log your first one above.
             </p>
           ) : (
-            <VitalHistoryTable readings={readings} onEdit={openEdit} />
+            <VitalHistoryTable
+              readings={readings}
+              onEdit={canWrite ? openEdit : null}
+              canDelete={canDelete}
+            />
           )}
         </>
       )}

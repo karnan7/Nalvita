@@ -9,6 +9,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { auditedInvalidate } from '@/lib/audit';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 /** Show a refill reminder once the refill date is this many days away (or overdue). */
@@ -80,14 +81,17 @@ export function formatMedDate(date: string): string {
   });
 }
 
-/** The signed-in user's medicines, newest first. */
+/** The active profile's medicines, newest first. */
 export function useMedicines() {
+  const { userId } = useActiveProfile();
   return useQuery({
-    queryKey: ['medicines'],
+    queryKey: ['medicines', userId],
+    enabled: Boolean(userId),
     queryFn: async (): Promise<Medicine[]> => {
       const { data, error } = await supabase
         .from('medicines')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return medicineListSchema.parse(data);

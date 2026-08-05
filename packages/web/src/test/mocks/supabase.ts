@@ -58,11 +58,21 @@ export function makeProfileRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/**
+ * A single-row builder shaped like the real chain:
+ * `.select('*').eq('user_id', …).single()`, or `.maybeSingle()` where the row
+ * may legitimately be absent.
+ */
+export function rowBuilder(row: Record<string, unknown> | null) {
+  const result = { data: row, error: null };
+  const leaf = { single: async () => result, maybeSingle: async () => result };
+  const scoped = { eq: () => leaf };
+  return { select: () => scoped };
+}
+
 /** Makes `supabase.from('profiles').select().eq().single()` resolve to the given row. */
 export function stubProfileSelect(row: Record<string, unknown>) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ eq: () => ({ single: async () => ({ data: row, error: null }) }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(rowBuilder(row) as never);
 }
 
 /** A documents row as PostgREST would return it. */
@@ -83,11 +93,43 @@ export function makeDocumentRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Makes `supabase.from('documents').select('*').order()` resolve to the given rows. */
+interface ListResult {
+  data: Record<string, unknown>[];
+  error: null;
+}
+
+/** A link in the chain: awaitable, and still chainable. */
+interface ListQuery extends Promise<ListResult> {
+  order: () => ListQuery;
+  eq: () => ListQuery;
+  limit: () => ListQuery;
+}
+
+/**
+ * A list builder shaped like the real chain. Every record query is scoped to
+ * one profile — `.select('*').eq('user_id', …)` — and from there callers may
+ * order, narrow again, or limit in any combination, awaiting whenever they
+ * stop. So each link is a real promise carrying the chain methods, exactly as
+ * PostgREST's builder is: awaiting works because the link *is* a promise, not
+ * because a `then` was bolted onto a plain object.
+ */
+export function listBuilder(rows: Record<string, unknown>[]) {
+  const result: ListResult = { data: rows, error: null };
+
+  function link(): ListQuery {
+    const query = Promise.resolve(result) as ListQuery;
+    query.order = link;
+    query.eq = link;
+    query.limit = link;
+    return query;
+  }
+
+  return { select: link };
+}
+
+/** Makes `supabase.from('documents')` resolve its list query to the given rows. */
 export function stubDocumentsList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ order: async () => ({ data: rows, error: null }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
 }
 
 /** A medicines row as PostgREST would return it. */
@@ -111,11 +153,9 @@ export function makeMedicineRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Makes `supabase.from('medicines').select('*').order()` resolve to the given rows. */
+/** Makes `supabase.from('medicines')` resolve its list query to the given rows. */
 export function stubMedicinesList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ order: async () => ({ data: rows, error: null }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
 }
 
 /** A vitals row as PostgREST would return it (a blood pressure reading by default). */
@@ -134,11 +174,9 @@ export function makeVitalRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Makes `supabase.from('vitals').select('*').order()` resolve to the given rows. */
+/** Makes `supabase.from('vitals')` resolve its list query to the given rows. */
 export function stubVitalsList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ order: async () => ({ data: rows, error: null }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
 }
 
 /** An allergies row as PostgREST would return it. */
@@ -265,13 +303,9 @@ export function stubTables(fixtures: TableFixtures) {
   vi.mocked(supabase.from).mockImplementation((table: string) => {
     if (table === 'profiles') {
       const row = fixtures.profiles ?? makeProfileRow();
-      return {
-        select: () => ({ eq: () => ({ single: async () => ({ data: row, error: null }) }) }),
-      } as never;
+      return rowBuilder(row) as never;
     }
     const rows = (fixtures as Record<string, Record<string, unknown>[]>)[table] ?? [];
-    return {
-      select: () => ({ order: async () => ({ data: rows, error: null }) }),
-    } as never;
+    return listBuilder(rows) as never;
   });
 }

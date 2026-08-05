@@ -19,7 +19,8 @@ import {
 
 interface MedicineCardProps {
   medicine: Medicine;
-  onEdit: (medicine: Medicine) => void;
+  /** Null when the current role may not change this person's medicines. */
+  onEdit: ((medicine: Medicine) => void) | null;
 }
 
 export function MedicineCard({ medicine, onEdit }: Readonly<MedicineCardProps>) {
@@ -62,11 +63,13 @@ export function MedicineCard({ medicine, onEdit }: Readonly<MedicineCardProps>) 
         )}
       </div>
       <div className="flex shrink-0 gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEdit(medicine)}>
-          <Pencil />
-          Edit
-        </Button>
-        {!past && (
+        {onEdit && (
+          <Button variant="outline" size="sm" onClick={() => onEdit(medicine)}>
+            <Pencil />
+            Edit
+          </Button>
+        )}
+        {onEdit && !past && (
           <Button
             variant="ghost"
             size="sm"

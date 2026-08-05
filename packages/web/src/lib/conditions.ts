@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 const conditionListSchema = z.array(conditionSchema);
@@ -37,14 +38,17 @@ export function formatConditionDate(date: string): string {
   });
 }
 
-/** The signed-in user's conditions, newest first. */
+/** The active profile's conditions, newest first. */
 export function useConditions() {
+  const { userId } = useActiveProfile();
   return useQuery({
-    queryKey: ['conditions'],
+    queryKey: ['conditions', userId],
+    enabled: Boolean(userId),
     queryFn: async (): Promise<Condition[]> => {
       const { data, error } = await supabase
         .from('conditions')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return conditionListSchema.parse(data);

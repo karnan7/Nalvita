@@ -6,6 +6,7 @@ import { DocumentCard } from '@/components/documents/document-card';
 import { DocumentViewer } from '@/components/documents/document-viewer';
 import { UploadDialog } from '@/components/documents/upload-dialog';
 import { Button } from '@/components/ui/button';
+import { useRecordPermissions } from '@/lib/circle';
 import { Input } from '@/components/ui/input';
 import { DOCUMENT_CATEGORY_LABELS, useDocuments } from '@/lib/documents';
 import { cn } from '@/lib/utils';
@@ -53,6 +54,8 @@ export default function DocumentsPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<CategoryFilter>('all');
 
+  const { canWrite, canDelete, guardWrite } = useRecordPermissions();
+
   const filtered = useMemo(() => {
     if (!documents) return [];
     const query = search.trim().toLowerCase();
@@ -67,10 +70,12 @@ export default function DocumentsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Documents</h1>
-        <Button onClick={() => setUploadOpen(true)}>
-          <Plus />
-          Upload document
-        </Button>
+        {canWrite && (
+          <Button onClick={() => guardWrite(() => setUploadOpen(true))}>
+            <Plus />
+            Upload document
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-3">
@@ -103,7 +108,7 @@ export default function DocumentsPage() {
       {filtered.length > 0 && (
         <ul className="flex flex-col gap-3">
           {filtered.map((doc) => (
-            <DocumentCard key={doc.id} doc={doc} onView={setViewing} />
+            <DocumentCard key={doc.id} doc={doc} onView={setViewing} canDelete={canDelete} />
           ))}
         </ul>
       )}

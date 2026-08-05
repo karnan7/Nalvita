@@ -9,10 +9,17 @@ import { formatMeasuredAt, formatVitalValue, useDeleteVital, VITAL_UNITS } from 
 
 interface VitalHistoryTableProps {
   readings: Vital[];
-  onEdit: (vital: Vital) => void;
+  /** Null when the current role may not change this person's readings. */
+  onEdit: ((vital: Vital) => void) | null;
+  /** False when the current role may not remove them. */
+  canDelete?: boolean;
 }
 
-export function VitalHistoryTable({ readings, onEdit }: Readonly<VitalHistoryTableProps>) {
+export function VitalHistoryTable({
+  readings,
+  onEdit,
+  canDelete = true,
+}: Readonly<VitalHistoryTableProps>) {
   const [deleting, setDeleting] = useState<Vital | null>(null);
   const remove = useDeleteVital();
 
@@ -49,22 +56,26 @@ export function VitalHistoryTable({ readings, onEdit }: Readonly<VitalHistoryTab
               <td className="py-2 pr-4 text-muted-foreground">{reading.notes}</td>
               <td className="py-2">
                 <div className="flex justify-end gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Edit reading"
-                    onClick={() => onEdit(reading)}
-                  >
-                    <Pencil />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Delete reading"
-                    onClick={() => setDeleting(reading)}
-                  >
-                    <Trash2 className="text-destructive" />
-                  </Button>
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Edit reading"
+                      onClick={() => onEdit(reading)}
+                    >
+                      <Pencil />
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Delete reading"
+                      onClick={() => setDeleting(reading)}
+                    >
+                      <Trash2 className="text-destructive" />
+                    </Button>
+                  )}
                 </div>
               </td>
             </tr>

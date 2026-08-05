@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 const allergyListSchema = z.array(allergySchema);
@@ -38,14 +39,17 @@ export interface AllergyFormValues {
   reaction: string | null;
 }
 
-/** The signed-in user's allergies, newest first. */
+/** The active profile's allergies, newest first. */
 export function useAllergies() {
+  const { userId } = useActiveProfile();
   return useQuery({
-    queryKey: ['allergies'],
+    queryKey: ['allergies', userId],
+    enabled: Boolean(userId),
     queryFn: async (): Promise<Allergy[]> => {
       const { data, error } = await supabase
         .from('allergies')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return allergyListSchema.parse(data);

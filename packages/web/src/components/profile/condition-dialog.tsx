@@ -1,13 +1,13 @@
 import { CONDITION_STATUSES, type Condition, type ConditionStatus } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/lib/auth-context';
 import {
   CONDITION_STATUS_LABELS,
   useAddCondition,
@@ -37,8 +37,7 @@ function formFromCondition(condition: Condition): ConditionFormValues {
 }
 
 export function ConditionDialog({ open, onClose, condition }: Readonly<ConditionDialogProps>) {
-  const { session } = useAuth();
-  const userId = session?.user.id ?? '';
+  const { userId } = useActiveProfile();
   const add = useAddCondition(userId);
   const update = useUpdateCondition();
   const isEditing = Boolean(condition);

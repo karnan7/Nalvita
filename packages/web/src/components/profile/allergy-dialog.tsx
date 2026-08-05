@@ -1,13 +1,13 @@
 import { ALLERGY_SEVERITIES, type Allergy, type AllergySeverity } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/lib/auth-context';
 import {
   ALLERGY_SEVERITY_LABELS,
   useAddAllergy,
@@ -31,8 +31,7 @@ function formFromAllergy(allergy: Allergy): AllergyFormValues {
 }
 
 export function AllergyDialog({ open, onClose, allergy }: Readonly<AllergyDialogProps>) {
-  const { session } = useAuth();
-  const userId = session?.user.id ?? '';
+  const { userId } = useActiveProfile();
   const add = useAddAllergy(userId);
   const update = useUpdateAllergy();
   const isEditing = Boolean(allergy);

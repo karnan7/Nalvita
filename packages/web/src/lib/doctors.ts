@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 const doctorListSchema = z.array(doctorSchema);
@@ -16,14 +17,17 @@ export interface DoctorFormValues {
   email: string | null;
 }
 
-/** The signed-in user's doctors, newest first. */
+/** The active profile's doctors, newest first. */
 export function useDoctors() {
+  const { userId } = useActiveProfile();
   return useQuery({
-    queryKey: ['doctors'],
+    queryKey: ['doctors', userId],
+    enabled: Boolean(userId),
     queryFn: async (): Promise<Doctor[]> => {
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return doctorListSchema.parse(data);

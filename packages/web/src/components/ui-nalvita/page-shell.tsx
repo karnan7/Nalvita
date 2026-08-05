@@ -14,6 +14,7 @@ import { Link, NavLink } from "react-router-dom";
 
 import logoFullDark from "@/assets/logo-full-dark-4x.png";
 import logoFullLight from "@/assets/logo-full-light-4x.png";
+import { ViewingAsBanner } from "@/components/family/viewing-as-banner";
 import { ThemeToggle } from "@/components/ui-nalvita/theme-toggle";
 import { useAuth } from "@/lib/auth-context";
 import { useProfile } from "@/lib/profile";
@@ -168,6 +169,8 @@ export function PageShell({ children }: Readonly<{ children: ReactNode }>) {
             <MobileLink key={item.to} {...item} />
           ))}
         </nav>
+
+        <ViewingAsBanner />
 
         <main className="mx-auto w-full max-w-5xl flex-1 p-4 sm:p-6">
           {children}

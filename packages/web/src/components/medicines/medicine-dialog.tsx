@@ -7,13 +7,13 @@ import {
 } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/lib/auth-context';
 import {
   MEDICINE_FREQUENCY_LABELS,
   MEDICINE_TIMING_LABELS,
@@ -59,8 +59,7 @@ function formFromMedicine(medicine: Medicine): MedicineFormValues {
 }
 
 export function MedicineDialog({ open, onClose, medicine }: Readonly<MedicineDialogProps>) {
-  const { session } = useAuth();
-  const userId = session?.user.id ?? '';
+  const { userId } = useActiveProfile();
   const add = useAddMedicine(userId);
   const update = useUpdateMedicine();
   const isEditing = Boolean(medicine);
