@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
-import { useAuth } from '@/lib/auth-context';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { useAddDoctor, useUpdateDoctor, type DoctorFormValues } from '@/lib/doctors';
 
 interface DoctorDialogProps {
@@ -30,8 +30,7 @@ function formFromDoctor(doctor: Doctor): DoctorFormValues {
 }
 
 export function DoctorDialog({ open, onClose, doctor }: Readonly<DoctorDialogProps>) {
-  const { session } = useAuth();
-  const userId = session?.user.id ?? '';
+  const { userId } = useActiveProfile();
   const add = useAddDoctor(userId);
   const update = useUpdateDoctor();
   const isEditing = Boolean(doctor);

@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { MedicineCard } from '@/components/medicines/medicine-card';
 import { MedicineDialog } from '@/components/medicines/medicine-dialog';
 import { Button } from '@/components/ui/button';
+import { useRecordPermissions } from '@/lib/circle';
 import { isMedicinePast, useMedicines } from '@/lib/medicines';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +48,7 @@ function Tabs({
 
 export default function MedicinesPage() {
   const { data: medicines, isPending, isError } = useMedicines();
+  const { canWrite, guardWrite } = useRecordPermissions();
   const [tab, setTab] = useState<Tab>('active');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Medicine | null>(null);
@@ -63,23 +65,29 @@ export default function MedicinesPage() {
   const shown = tab === 'active' ? active : past;
 
   function openAdd() {
-    setEditing(null);
-    setDialogOpen(true);
+    guardWrite(() => {
+      setEditing(null);
+      setDialogOpen(true);
+    });
   }
 
   function openEdit(medicine: Medicine) {
-    setEditing(medicine);
-    setDialogOpen(true);
+    guardWrite(() => {
+      setEditing(medicine);
+      setDialogOpen(true);
+    });
   }
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold tracking-tight">Medicines</h1>
-        <Button onClick={openAdd}>
-          <Plus />
-          Add medicine
-        </Button>
+        {canWrite && (
+          <Button onClick={openAdd}>
+            <Plus />
+            Add medicine
+          </Button>
+        )}
       </div>
 
       <Tabs selected={tab} onSelect={setTab} counts={{ active: active.length, past: past.length }} />
@@ -98,7 +106,11 @@ export default function MedicinesPage() {
       {shown.length > 0 && (
         <ul className="flex flex-col gap-3">
           {shown.map((medicine) => (
-            <MedicineCard key={medicine.id} medicine={medicine} onEdit={openEdit} />
+            <MedicineCard
+              key={medicine.id}
+              medicine={medicine}
+              onEdit={canWrite ? openEdit : null}
+            />
           ))}
         </ul>
       )}

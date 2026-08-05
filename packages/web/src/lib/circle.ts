@@ -4,12 +4,14 @@ import {
   circleInviteSummarySchema,
   circlePersonSchema,
   INVITE_CODE_LENGTH,
+  type CirclePerson,
   type CircleRole,
   type ShareCategory,
 } from '@nalvita/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 const peopleListSchema = z.array(circlePersonSchema);
@@ -56,6 +58,46 @@ export function describeCategories(categories: readonly ShareCategory[]): string
   const labels = categories.map((c) => SHARE_CATEGORY_LABELS[c]);
   if (labels.length <= 1) return labels[0] ?? '';
   return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+}
+
+/**
+ * What the person viewing may do in the account they are looking at. A null
+ * membership means it is their own account, where everything is allowed.
+ *
+ * These gate the UI so people are not offered actions the database would
+ * refuse — RLS remains the thing that actually enforces them.
+ */
+export function allowsCategory(
+  viewing: CirclePerson | null,
+  category: ShareCategory,
+): boolean {
+  if (!viewing) return true;
+  const shared = viewing.shared_categories;
+  return shared.includes('all') || shared.includes(category);
+}
+
+/** Adding and editing records needs caregiver or manager. */
+export function allowsWrite(viewing: CirclePerson | null): boolean {
+  return viewing === null || viewing.role === 'caregiver' || viewing.role === 'manager';
+}
+
+/** Deleting records needs manager. */
+export function allowsDelete(viewing: CirclePerson | null): boolean {
+  return viewing === null || viewing.role === 'manager';
+}
+
+/**
+ * What the current screen may offer, given whose records are open. Pages use
+ * this to hide actions rather than let people try them and be refused.
+ */
+export function useRecordPermissions() {
+  const { viewing, guardWrite } = useActiveProfile();
+  return {
+    canWrite: allowsWrite(viewing),
+    canDelete: allowsDelete(viewing),
+    /** Wraps an action so the first write into someone else's account is confirmed. */
+    guardWrite,
+  };
 }
 
 /** What one person in a circle is allowed to do, as the access form models it. */

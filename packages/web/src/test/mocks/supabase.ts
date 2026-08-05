@@ -61,7 +61,12 @@ export function makeProfileRow(overrides: Record<string, unknown> = {}) {
 /** Makes `supabase.from('profiles').select().eq().single()` resolve to the given row. */
 export function stubProfileSelect(row: Record<string, unknown>) {
   vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ eq: () => ({ single: async () => ({ data: row, error: null }) }) }),
+    select: () => ({
+      eq: () => ({
+        single: async () => ({ data: row, error: null }),
+        maybeSingle: async () => ({ data: row, error: null }),
+      }),
+    }),
   } as never);
 }
 
@@ -83,11 +88,26 @@ export function makeDocumentRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Makes `supabase.from('documents').select('*').order()` resolve to the given rows. */
+/**
+ * A list builder shaped like the real chain. Every record query is scoped to
+ * one profile — `.select('*').eq('user_id', …)` — and from there callers may
+ * order, narrow again, or limit in any combination, awaiting whenever they
+ * stop. So each link returns the same thenable node rather than a fixed shape.
+ */
+export function listBuilder(rows: Record<string, unknown>[]) {
+  const result = { data: rows, error: null };
+  const node = {
+    order: () => node,
+    eq: () => node,
+    limit: () => node,
+    then: (resolve: (value: typeof result) => void) => resolve(result),
+  };
+  return { select: () => node };
+}
+
+/** Makes `supabase.from('documents')` resolve its list query to the given rows. */
 export function stubDocumentsList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ order: async () => ({ data: rows, error: null }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
 }
 
 /** A medicines row as PostgREST would return it. */
@@ -111,11 +131,9 @@ export function makeMedicineRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Makes `supabase.from('medicines').select('*').order()` resolve to the given rows. */
+/** Makes `supabase.from('medicines')` resolve its list query to the given rows. */
 export function stubMedicinesList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ order: async () => ({ data: rows, error: null }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
 }
 
 /** A vitals row as PostgREST would return it (a blood pressure reading by default). */
@@ -134,11 +152,9 @@ export function makeVitalRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Makes `supabase.from('vitals').select('*').order()` resolve to the given rows. */
+/** Makes `supabase.from('vitals')` resolve its list query to the given rows. */
 export function stubVitalsList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue({
-    select: () => ({ order: async () => ({ data: rows, error: null }) }),
-  } as never);
+  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
 }
 
 /** An allergies row as PostgREST would return it. */
@@ -266,12 +282,15 @@ export function stubTables(fixtures: TableFixtures) {
     if (table === 'profiles') {
       const row = fixtures.profiles ?? makeProfileRow();
       return {
-        select: () => ({ eq: () => ({ single: async () => ({ data: row, error: null }) }) }),
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: row, error: null }),
+            maybeSingle: async () => ({ data: row, error: null }),
+          }),
+        }),
       } as never;
     }
     const rows = (fixtures as Record<string, Record<string, unknown>[]>)[table] ?? [];
-    return {
-      select: () => ({ order: async () => ({ data: rows, error: null }) }),
-    } as never;
+    return listBuilder(rows) as never;
   });
 }

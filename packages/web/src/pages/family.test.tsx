@@ -1,30 +1,40 @@
-import { screen, within } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import FamilyPage from './family';
+import { ViewingAsBanner } from '@/components/family/viewing-as-banner';
 import { supabase } from '@/lib/supabase';
 import {
-  makeAuditFeedRow,
+  listBuilder,
   makeCirclePersonRow,
-  makeInviteRow,
+  makeMedicineRow,
+  makeProfileRow,
   makeSession,
+  makeVitalRow,
 } from '@/test/mocks/supabase';
 import { renderWithProviders } from '@/test/render';
 
-/** Captures the payload of every circle_memberships UPDATE the page issues. */
-const membershipUpdate = vi.fn((payload: Record<string, unknown>) =>
-  Promise.resolve({ error: null, payload }),
-);
+const APPA = '00000000-0000-4000-8000-000000000002';
 
-function stubCircle({
+/** A membership where I am the member — someone whose records I can help with. */
+function inMyCare(overrides: Record<string, unknown> = {}) {
+  return makeCirclePersonRow({
+    direction: 'member',
+    shared_categories: ['all'],
+    counterpart_id: APPA,
+    ...overrides,
+  });
+}
+
+function stubFamily({
   people = [],
-  invites = [],
-  activity = [],
+  medicines = [],
+  vitals = [],
 }: {
   people?: Record<string, unknown>[];
-  invites?: Record<string, unknown>[];
-  activity?: Record<string, unknown>[];
+  medicines?: Record<string, unknown>[];
+  vitals?: Record<string, unknown>[];
 } = {}) {
   vi.mocked(supabase.auth.getSession).mockResolvedValue({
     data: { session: makeSession() },
@@ -33,25 +43,24 @@ function stubCircle({
 
   vi.mocked(supabase.rpc).mockImplementation((async (fn: string) => {
     if (fn === 'list_circle_people') return { data: people, error: null };
-    if (fn === 'list_audit_feed') return { data: activity, error: null };
-    return { data: null, error: null };
+    return { data: [], error: null };
   }) as never);
 
   vi.mocked(supabase.from).mockImplementation(((table: string) => {
-    if (table === 'circle_invites') {
+    if (table === 'profiles') {
+      const row = makeProfileRow({ user_id: APPA, date_of_birth: '1962-04-01' });
       return {
-        select: () => ({ eq: () => ({ order: async () => ({ data: invites, error: null }) }) }),
-        delete: () => ({ eq: async () => ({ error: null }) }),
-      };
-    }
-    if (table === 'circle_memberships') {
-      return {
-        update: (payload: Record<string, unknown>) => ({
-          eq: async () => membershipUpdate(payload),
+        select: () => ({
+          eq: () => ({
+            single: async () => ({ data: row, error: null }),
+            maybeSingle: async () => ({ data: row, error: null }),
+          }),
         }),
       };
     }
-    return { select: () => ({ order: async () => ({ data: [], error: null }) }) };
+    if (table === 'medicines') return listBuilder(medicines);
+    if (table === 'vitals') return listBuilder(vitals);
+    return listBuilder([]);
   }) as never);
 }
 
@@ -60,128 +69,106 @@ describe('FamilyPage', () => {
     vi.clearAllMocks();
   });
 
-  it('shows an empty state when no one is connected yet', async () => {
-    stubCircle();
+  it('points at the invite flow when nobody has shared with me', async () => {
+    stubFamily();
     renderWithProviders(<FamilyPage />, { route: '/family' });
 
-    expect(await screen.findByText('No one yet')).toBeInTheDocument();
+    expect(await screen.findByText('No one to look after')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Invite family member' })).toHaveAttribute(
+      'href',
+      '/family/sharing',
+    );
   });
 
-  it('lists members with their role, categories and since when', async () => {
-    stubCircle({ people: [makeCirclePersonRow()] });
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    expect(await screen.findByText('Appa')).toBeInTheDocument();
-    expect(screen.getByText(/Can view and add/)).toBeInTheDocument();
-    expect(screen.getByText(/Medicines and Vitals/)).toBeInTheDocument();
-    expect(screen.getByText(/^Sharing since /)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Remove access' })).toBeInTheDocument();
-  });
-
-  it('asks for confirmation before removing a member', async () => {
-    stubCircle({ people: [makeCirclePersonRow()] });
-    const user = userEvent.setup();
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    await user.click(await screen.findByRole('button', { name: 'Remove access' }));
-    expect(membershipUpdate).not.toHaveBeenCalled();
-
-    const dialog = screen.getByRole('dialog', { name: 'Remove access?' });
-    await user.click(within(dialog).getByRole('button', { name: 'Remove access' }));
-    expect(membershipUpdate).toHaveBeenCalledWith({ status: 'revoked' });
-  });
-
-  it('keeps access when the owner backs out of the confirmation', async () => {
-    stubCircle({ people: [makeCirclePersonRow()] });
-    const user = userEvent.setup();
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    await user.click(await screen.findByRole('button', { name: 'Remove access' }));
-    await user.click(screen.getByRole('button', { name: 'Keep access' }));
-
-    expect(membershipUpdate).not.toHaveBeenCalled();
-    expect(screen.queryByRole('dialog', { name: 'Remove access?' })).not.toBeInTheDocument();
-  });
-
-  it("changes a member's role and categories", async () => {
-    stubCircle({ people: [makeCirclePersonRow()] });
-    const user = userEvent.setup();
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    await user.click(await screen.findByRole('button', { name: 'Change access' }));
-    const dialog = screen.getByRole('dialog', { name: 'Change what they can see' });
-
-    // The dialog opens on what they have today, not on defaults.
-    expect(within(dialog).getByLabelText('What they can do')).toHaveValue('caregiver');
-    expect(within(dialog).getByLabelText('Medicines')).toBeChecked();
-    expect(within(dialog).getByLabelText('Documents')).not.toBeChecked();
-
-    await user.selectOptions(within(dialog).getByLabelText('What they can do'), 'viewer');
-    await user.click(within(dialog).getByLabelText('Medicines'));
-    await user.click(within(dialog).getByRole('button', { name: 'Save changes' }));
-
-    expect(membershipUpdate).toHaveBeenCalledWith({
-      role: 'viewer',
-      shared_categories: ['vitals'],
-    });
-  });
-
-  it('will not save an access change that shares nothing', async () => {
-    stubCircle({ people: [makeCirclePersonRow({ shared_categories: ['vitals'] })] });
-    const user = userEvent.setup();
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    await user.click(await screen.findByRole('button', { name: 'Change access' }));
-    const dialog = screen.getByRole('dialog', { name: 'Change what they can see' });
-
-    await user.click(within(dialog).getByLabelText('Vitals'));
-    expect(within(dialog).getByRole('button', { name: 'Save changes' })).toBeDisabled();
-  });
-
-  it('shows what other people did, in plain language', async () => {
-    stubCircle({ people: [makeCirclePersonRow()], activity: [makeAuditFeedRow()] });
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    expect(await screen.findByText('Appa viewed your Blood test report')).toBeInTheDocument();
-  });
-
-  it('reassures the owner when nobody has done anything', async () => {
-    stubCircle({ people: [makeCirclePersonRow()] });
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    expect(await screen.findByText('Nothing to show')).toBeInTheDocument();
-  });
-
-  it('shows pending invites the owner is waiting on', async () => {
-    stubCircle({ invites: [makeInviteRow()] });
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    expect(await screen.findByText('appa@example.com')).toBeInTheDocument();
-    expect(screen.getByText('Waiting')).toBeInTheDocument();
-  });
-
-  it('cancels a pending invite', async () => {
-    stubCircle({ invites: [makeInviteRow()] });
-    const user = userEvent.setup();
-    renderWithProviders(<FamilyPage />, { route: '/family' });
-
-    await user.click(await screen.findByRole('button', { name: 'Cancel' }));
-    expect(supabase.from).toHaveBeenCalledWith('circle_invites');
-  });
-
-  it('gently marks a circle whose access has ended', async () => {
-    stubCircle({
-      people: [
-        makeCirclePersonRow({
-          direction: 'member',
-          status: 'revoked',
-          counterpart_name: 'Arjun',
-        }),
-      ],
+  it("summarises a person's medicines, latest reading and age", async () => {
+    stubFamily({
+      people: [inMyCare()],
+      medicines: [makeMedicineRow({ user_id: APPA })],
+      vitals: [makeVitalRow({ user_id: APPA, measured_at: new Date().toISOString() })],
     });
     renderWithProviders(<FamilyPage />, { route: '/family' });
 
-    expect(await screen.findByText('Arjun')).toBeInTheDocument();
-    expect(screen.getByText('This access has ended.')).toBeInTheDocument();
+    expect(await screen.findByText(/^Appa, \d+$/)).toBeInTheDocument();
+    expect(screen.getByText('1 medicine')).toBeInTheDocument();
+    expect(screen.getByText('128/84')).toBeInTheDocument();
+  });
+
+  it('raises a chip when nobody has taken a reading this week', async () => {
+    stubFamily({
+      people: [inMyCare()],
+      medicines: [],
+      vitals: [makeVitalRow({ user_id: APPA, measured_at: '2026-06-01T08:00:00.000Z' })],
+    });
+    renderWithProviders(<FamilyPage />, { route: '/family' });
+
+    expect(await screen.findByText('No readings this week')).toBeInTheDocument();
+  });
+
+  it('leaves out what has not been shared with me', async () => {
+    stubFamily({
+      people: [inMyCare({ shared_categories: ['vitals'] })],
+      vitals: [makeVitalRow({ user_id: APPA, measured_at: new Date().toISOString() })],
+    });
+    renderWithProviders(<FamilyPage />, { route: '/family' });
+
+    expect(await screen.findByText('128/84')).toBeInTheDocument();
+    expect(screen.queryByText(/medicine/)).not.toBeInTheDocument();
+  });
+
+  it('ignores circles whose access has been revoked', async () => {
+    stubFamily({ people: [inMyCare({ status: 'revoked' })] });
+    renderWithProviders(<FamilyPage />, { route: '/family' });
+
+    expect(await screen.findByText('No one to look after')).toBeInTheDocument();
+  });
+
+  it('does not list the people who can see my own records', async () => {
+    stubFamily({ people: [makeCirclePersonRow({ direction: 'owner' })] });
+    renderWithProviders(<FamilyPage />, { route: '/family' });
+
+    expect(await screen.findByText('No one to look after')).toBeInTheDocument();
+  });
+
+  it('switches into their records, and says so, when their card is chosen', async () => {
+    stubFamily({
+      people: [inMyCare()],
+      vitals: [makeVitalRow({ user_id: APPA, measured_at: new Date().toISOString() })],
+    });
+    const user = userEvent.setup();
+    // Rendered together so the click travels through the real context: the
+    // banner is what tells someone they have left their own account.
+    renderWithProviders(
+      <>
+        <ViewingAsBanner />
+        <FamilyPage />
+      </>,
+      { route: '/family' },
+    );
+
+    expect(screen.queryByText(/You're in/)).not.toBeInTheDocument();
+
+    await user.click(await screen.findByRole('button', { name: /Appa/ }));
+
+    expect(await screen.findByText(/You're in Appa's records/)).toBeInTheDocument();
+  });
+
+  it('returns me to my own records from the banner', async () => {
+    stubFamily({
+      people: [inMyCare()],
+      vitals: [makeVitalRow({ user_id: APPA, measured_at: new Date().toISOString() })],
+    });
+    const user = userEvent.setup();
+    renderWithProviders(
+      <>
+        <ViewingAsBanner />
+        <FamilyPage />
+      </>,
+      { route: '/family' },
+    );
+
+    await user.click(await screen.findByRole('button', { name: /Appa/ }));
+    await user.click(screen.getByRole('button', { name: 'Back to my records' }));
+
+    expect(screen.queryByText(/You're in Appa's records/)).not.toBeInTheDocument();
   });
 });

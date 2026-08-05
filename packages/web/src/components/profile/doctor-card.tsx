@@ -1,7 +1,8 @@
 import type { Doctor } from '@nalvita/core';
-import { Mail, Pencil, Phone, Trash2 } from 'lucide-react';
+import { Mail, Phone } from 'lucide-react';
 import { useState } from 'react';
 
+import { RecordActions } from '@/components/profile/record-actions';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useDeleteDoctor } from '@/lib/doctors';
@@ -49,20 +50,11 @@ export function DoctorCard({ doctor, onEdit }: Readonly<DoctorCardProps>) {
           )}
         </div>
       </div>
-      <div className="flex shrink-0 gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEdit(doctor)}>
-          <Pencil />
-          Edit
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={`Delete ${doctor.name}`}
-          onClick={() => setConfirmingDelete(true)}
-        >
-          <Trash2 className="text-destructive" />
-        </Button>
-      </div>
+      <RecordActions
+        onEdit={() => onEdit(doctor)}
+        onDelete={() => setConfirmingDelete(true)}
+        deleteLabel={`Delete ${doctor.name}`}
+      />
 
       <Modal
         open={confirmingDelete}

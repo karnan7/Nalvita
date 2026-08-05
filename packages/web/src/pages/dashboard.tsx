@@ -4,18 +4,22 @@ import { RecentDocumentsCard } from '@/components/dashboard/recent-documents-car
 import { StatCards } from '@/components/dashboard/stat-cards';
 import { TimelineCard } from '@/components/dashboard/timeline-card';
 import { VitalsCard } from '@/components/dashboard/vitals-card';
-import { useAuth } from '@/lib/auth-context';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { useProfile } from '@/lib/profile';
 
 export default function DashboardPage() {
-  const { session } = useAuth();
-  const { data: profile } = useProfile(session?.user.id);
+  const { userId, isSelf } = useActiveProfile();
+  const { data: profile } = useProfile(userId);
+
+  // Greeting only makes sense in your own account; in someone else's the
+  // heading says whose records these are, and the banner above repeats it.
+  let heading = 'Hello';
+  if (!isSelf) heading = profile?.full_name ? `${profile.full_name}'s health` : 'Their health';
+  else if (profile?.full_name) heading = `Hello, ${profile.full_name}`;
 
   return (
     <div className="flex flex-col gap-6">
-      <h1 className="text-2xl font-bold tracking-tight">
-        {profile?.full_name ? `Hello, ${profile.full_name}` : 'Hello'}
-      </h1>
+      <h1 className="text-2xl font-bold tracking-tight">{heading}</h1>
 
       <AllergyBanner />
       <StatCards />

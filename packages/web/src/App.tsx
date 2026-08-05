@@ -5,6 +5,7 @@ import { RequireAuth } from '@/components/require-auth';
 import DashboardPage from '@/pages/dashboard';
 import DocumentsPage from '@/pages/documents';
 import FamilyPage from '@/pages/family';
+import FamilySharingPage from '@/pages/family-sharing';
 import JoinInvitePage from '@/pages/join-invite';
 import LandingPage from '@/pages/landing';
 import LoginPage from '@/pages/login';
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/vitals" element={<VitalsPage />} />
           <Route path="/timeline" element={<TimelinePage />} />
           <Route path="/family" element={<FamilyPage />} />
+          <Route path="/family/sharing" element={<FamilySharingPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

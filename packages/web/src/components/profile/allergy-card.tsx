@@ -1,8 +1,8 @@
 import type { Allergy } from '@nalvita/core';
-import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { AllergySeverityBadge } from '@/components/profile/allergy-severity-badge';
+import { RecordActions } from '@/components/profile/record-actions';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { useDeleteAllergy } from '@/lib/allergies';
@@ -31,20 +31,11 @@ export function AllergyCard({ allergy, onEdit }: Readonly<AllergyCardProps>) {
           <p className="mt-1 text-sm text-muted-foreground">{allergy.reaction}</p>
         )}
       </div>
-      <div className="flex shrink-0 gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEdit(allergy)}>
-          <Pencil />
-          Edit
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={`Delete ${allergy.allergen}`}
-          onClick={() => setConfirmingDelete(true)}
-        >
-          <Trash2 className="text-destructive" />
-        </Button>
-      </div>
+      <RecordActions
+        onEdit={() => onEdit(allergy)}
+        onDelete={() => setConfirmingDelete(true)}
+        deleteLabel={`Delete ${allergy.allergen}`}
+      />
 
       <Modal
         open={confirmingDelete}

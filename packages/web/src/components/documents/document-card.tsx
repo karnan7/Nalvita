@@ -15,9 +15,11 @@ import {
 interface DocumentCardProps {
   doc: Document;
   onView: (doc: Document) => void;
+  /** False when the current role may not remove this person's documents. */
+  canDelete?: boolean;
 }
 
-export function DocumentCard({ doc, onView }: Readonly<DocumentCardProps>) {
+export function DocumentCard({ doc, onView, canDelete = true }: Readonly<DocumentCardProps>) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const deleteDocument = useDeleteDocument();
 
@@ -52,14 +54,16 @@ export function DocumentCard({ doc, onView }: Readonly<DocumentCardProps>) {
         >
           <Download />
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={`Delete ${doc.title}`}
-          onClick={() => setConfirmingDelete(true)}
-        >
-          <Trash2 className="text-destructive" />
-        </Button>
+        {canDelete && (
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Delete ${doc.title}`}
+            onClick={() => setConfirmingDelete(true)}
+          >
+            <Trash2 className="text-destructive" />
+          </Button>
+        )}
       </div>
 
       <Modal

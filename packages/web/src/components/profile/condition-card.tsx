@@ -1,8 +1,8 @@
 import type { Condition, ConditionStatus } from '@nalvita/core';
-import { Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
 import { StatusBadge, type StatusVariant } from '@/components/ui-nalvita';
+import { RecordActions } from '@/components/profile/record-actions';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import {
@@ -57,20 +57,11 @@ export function ConditionCard({ condition, onEdit }: Readonly<ConditionCardProps
           <p className="mt-1 text-sm text-muted-foreground">{condition.notes}</p>
         )}
       </div>
-      <div className="flex shrink-0 gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEdit(condition)}>
-          <Pencil />
-          Edit
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-label={`Delete ${condition.name}`}
-          onClick={() => setConfirmingDelete(true)}
-        >
-          <Trash2 className="text-destructive" />
-        </Button>
-      </div>
+      <RecordActions
+        onEdit={() => onEdit(condition)}
+        onDelete={() => setConfirmingDelete(true)}
+        deleteLabel={`Delete ${condition.name}`}
+      />
 
       <Modal
         open={confirmingDelete}

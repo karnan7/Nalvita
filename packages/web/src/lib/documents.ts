@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { auditedInvalidate } from '@/lib/audit';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 const BUCKET = 'health-documents';
@@ -76,14 +77,17 @@ export function isPdf(document: Pick<Document, 'file_type'>): boolean {
   return document.file_type === 'application/pdf';
 }
 
-/** The signed-in user's documents, newest first. */
+/** The active profile's documents, newest first. */
 export function useDocuments() {
+  const { userId } = useActiveProfile();
   return useQuery({
-    queryKey: ['documents'],
+    queryKey: ['documents', userId],
+    enabled: Boolean(userId),
     queryFn: async (): Promise<Document[]> => {
       const { data, error } = await supabase
         .from('documents')
         .select('*')
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return documentListSchema.parse(data);

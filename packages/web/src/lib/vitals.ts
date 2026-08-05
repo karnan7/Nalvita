@@ -10,6 +10,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { supabase } from '@/lib/supabase';
 
 const vitalListSchema = z.array(vitalSchema);
@@ -101,14 +102,17 @@ function toRow(values: VitalFormValues) {
   };
 }
 
-/** The signed-in user's vitals, newest first. */
+/** The active profile's vitals, newest first. */
 export function useVitals() {
+  const { userId } = useActiveProfile();
   return useQuery({
-    queryKey: ['vitals'],
+    queryKey: ['vitals', userId],
+    enabled: Boolean(userId),
     queryFn: async (): Promise<Vital[]> => {
       const { data, error } = await supabase
         .from('vitals')
         .select('*')
+        .eq('user_id', userId)
         .order('measured_at', { ascending: false });
       if (error) throw error;
       return vitalListSchema.parse(data);

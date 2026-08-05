@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
+import { ActiveProfileProvider } from '@/components/active-profile-provider';
 import { AuthProvider } from '@/components/auth-provider';
 import { ThemeProvider } from '@/lib/theme';
 
@@ -15,7 +16,9 @@ export function renderWithProviders(ui: ReactNode, { route = '/' } = {}) {
     <ThemeProvider>
       <MemoryRouter initialEntries={[route]}>
         <AuthProvider>
-          <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+          <QueryClientProvider client={queryClient}>
+            <ActiveProfileProvider>{ui}</ActiveProfileProvider>
+          </QueryClientProvider>
         </AuthProvider>
       </MemoryRouter>
     </ThemeProvider>,

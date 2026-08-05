@@ -2,13 +2,13 @@ import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@nalvita/core';
 import { UploadCloud } from 'lucide-react';
 import { useId, useRef, useState, type DragEvent, type SyntheticEvent } from 'react';
 
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { useAuth } from '@/lib/auth-context';
 import {
   checkUploadFile,
   DOCUMENT_CATEGORY_LABELS,
@@ -35,8 +35,7 @@ interface UploadDialogProps {
 }
 
 export function UploadDialog({ open, onClose }: Readonly<UploadDialogProps>) {
-  const { session } = useAuth();
-  const userId = session?.user.id ?? '';
+  const { userId } = useActiveProfile();
   const upload = useUploadDocument(userId);
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);

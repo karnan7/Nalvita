@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
+import { ActiveProfileProvider } from './components/active-profile-provider';
 import { AuthProvider } from './components/auth-provider';
 import { ThemeProvider } from './lib/theme';
 import './index.css';
@@ -16,7 +17,9 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
-            <App />
+            <ActiveProfileProvider>
+              <App />
+            </ActiveProfileProvider>
           </QueryClientProvider>
         </AuthProvider>
       </BrowserRouter>
