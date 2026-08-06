@@ -23,7 +23,7 @@ async function newMember(label: string): Promise<TestUser> {
 beforeAll(async () => {
   owner = await createTestUser('inv-owner');
   stranger = await createTestUser('inv-stranger');
-  await owner.client.from('vitals').insert(insertPayload('vitals', owner.id));
+  await owner.client.from('vitals').insert(insertPayload('vitals', owner));
 });
 
 afterAll(async () => {
@@ -41,7 +41,7 @@ describe('accepting an invite', () => {
     const { data: vitals } = await member.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(vitals).toHaveLength(1);
 
     const { data: invRow } = await owner.client
@@ -59,7 +59,7 @@ describe('accepting an invite', () => {
     const { error } = await member.client.rpc('accept_circle_invite', { p_secret: invite.code });
     expect(error).toBeNull();
 
-    const { data } = await member.client.from('vitals').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('vitals').select('id').eq('profile_id', owner.profileId);
     expect(data).toHaveLength(1);
   });
 });
@@ -77,7 +77,7 @@ describe('previewing an invite', () => {
     });
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
-    expect(data![0].owner_id).toBe(owner.id);
+    expect(data![0].owner_id).toBe(owner.profileId);
     expect(data![0].requested_role).toBe('caregiver');
     expect(data![0].requested_categories).toEqual(['medicines', 'vitals']);
   });
@@ -91,7 +91,7 @@ describe('invites that should not grant access', () => {
     });
     expect(error).not.toBeNull();
 
-    const { data } = await member.client.from('vitals').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('vitals').select('id').eq('profile_id', owner.profileId);
     expect(data).toHaveLength(0);
   });
 
@@ -106,7 +106,7 @@ describe('invites that should not grant access', () => {
     const { error } = await member.client.rpc('accept_circle_invite', { p_secret: invite.token });
     expect(error).not.toBeNull();
 
-    const { data } = await member.client.from('vitals').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('vitals').select('id').eq('profile_id', owner.profileId);
     expect(data).toHaveLength(0);
   });
 
@@ -123,7 +123,7 @@ describe('invites that should not grant access', () => {
     const { error } = await member.client.rpc('decline_circle_invite', { p_secret: invite.token });
     expect(error).toBeNull();
 
-    const { data } = await member.client.from('vitals').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('vitals').select('id').eq('profile_id', owner.profileId);
     expect(data).toHaveLength(0);
   });
 });
@@ -156,7 +156,7 @@ describe('re-inviting after revoke', () => {
     const { data: goneVitals } = await member.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(goneVitals).toHaveLength(0);
 
     const second = await createInvite(owner, { role: 'caregiver', categories: ['all'] });
@@ -166,7 +166,7 @@ describe('re-inviting after revoke', () => {
     const { data: backVitals } = await member.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(backVitals).toHaveLength(1);
   });
 });

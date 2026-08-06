@@ -104,15 +104,15 @@ function toRow(values: VitalFormValues) {
 
 /** The active profile's vitals, newest first. */
 export function useVitals() {
-  const { userId } = useActiveProfile();
+  const { profileId } = useActiveProfile();
   return useQuery({
-    queryKey: ['vitals', userId],
-    enabled: Boolean(userId),
+    queryKey: ['vitals', profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<Vital[]> => {
       const { data, error } = await supabase
         .from('vitals')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('measured_at', { ascending: false });
       if (error) throw error;
       return vitalListSchema.parse(data);
@@ -121,14 +121,14 @@ export function useVitals() {
 }
 
 /** Logs a new reading. */
-export function useLogVital(userId: string) {
+export function useLogVital(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: VitalFormValues): Promise<Vital> => {
       const insert = vitalInsertSchema.parse(toRow(values));
       const { data, error } = await supabase
         .from('vitals')
-        .insert({ ...insert, user_id: userId })
+        .insert({ ...insert, profile_id: profileId })
         .select()
         .single();
       if (error) throw error;

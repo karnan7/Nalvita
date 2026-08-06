@@ -54,8 +54,8 @@ function stateFromVital(vital: Vital): FormState {
 }
 
 export function VitalLogDialog({ open, onClose, vital, defaultType }: Readonly<VitalLogDialogProps>) {
-  const { userId } = useActiveProfile();
-  const log = useLogVital(userId);
+  const { profileId } = useActiveProfile();
+  const log = useLogVital(profileId);
   const update = useUpdateVital();
   const isEditing = Boolean(vital);
   const mutation = isEditing ? update : log;

@@ -111,14 +111,14 @@ async function loadSummary(person: CirclePerson): Promise<FamilySummary> {
 
 async function loadDateOfBirth(person: CirclePerson, owner: string): Promise<string | null> {
   if (!allowsCategory(person, 'profiles')) return null;
-  const { data } = await supabase.from('profiles').select('*').eq('user_id', owner).maybeSingle();
+  const { data } = await supabase.from('profiles').select('*').eq('profile_id', owner).maybeSingle();
   if (!data) return null;
   return profileSchema.parse(data).date_of_birth;
 }
 
 async function loadMedicines(person: CirclePerson, owner: string): Promise<Medicine[] | null> {
   if (!allowsCategory(person, 'medicines')) return null;
-  const { data, error } = await supabase.from('medicines').select('*').eq('user_id', owner);
+  const { data, error } = await supabase.from('medicines').select('*').eq('profile_id', owner);
   if (error) throw error;
   return medicineListSchema.parse(data);
 }
@@ -128,7 +128,7 @@ async function loadLatestVital(person: CirclePerson, owner: string): Promise<Vit
   const { data, error } = await supabase
     .from('vitals')
     .select('*')
-    .eq('user_id', owner)
+    .eq('profile_id', owner)
     .order('measured_at', { ascending: false })
     .limit(1);
   if (error) throw error;
@@ -140,7 +140,7 @@ async function loadLastCheckup(person: CirclePerson, owner: string): Promise<str
   const { data, error } = await supabase
     .from('documents')
     .select('*')
-    .eq('user_id', owner)
+    .eq('profile_id', owner)
     .eq('category', 'consultation');
   if (error) throw error;
   return lastCheckupDate(documentListSchema.parse(data) as Document[]);

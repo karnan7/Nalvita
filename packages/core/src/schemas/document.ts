@@ -5,7 +5,7 @@ import { isoDate, isoDateTime } from './shared.js';
 /** A medical document stored in the private `health-documents` bucket. */
 export const documentSchema = z.object({
   id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  profile_id: z.string().uuid(),
   title: z.string().min(1),
   category: z.enum(DOCUMENT_CATEGORIES),
   doctor_name: z.string().nullable(),
@@ -22,7 +22,7 @@ export type Document = z.infer<typeof documentSchema>;
 /** Payload for creating a document row after upload. */
 export const documentInsertSchema = documentSchema.omit({
   id: true,
-  user_id: true,
+  profile_id: true,
   created_at: true,
 });
 

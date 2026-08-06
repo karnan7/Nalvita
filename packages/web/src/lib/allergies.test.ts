@@ -6,7 +6,7 @@ import { sortBySeverity } from './allergies';
 function makeAllergy(overrides: Partial<Allergy> = {}): Allergy {
   return {
     id: '00000000-0000-4000-8000-0000000000b1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-000000000001',
     allergen: 'Dust',
     severity: 'mild',
     reaction: null,

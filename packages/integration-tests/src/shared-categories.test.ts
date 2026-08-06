@@ -1,7 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createTestUser, deleteTestUsers, type TestUser } from './helpers/clients.js';
 import { createActiveMembership } from './helpers/memberships.js';
-import { insertPayload, seedAllTables, type HealthTable } from './helpers/seed.js';
+import {
+  insertPayload,
+  ownerColumn,
+  seedAllTables,
+  type HealthTable,
+} from './helpers/seed.js';
 
 /**
  * shared_categories scoping: a membership limited to specific table names
@@ -36,7 +41,7 @@ describe('viewer scoped to {vitals}', () => {
     const { data } = await vitalsViewer.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(data).toHaveLength(1);
   });
 
@@ -53,7 +58,7 @@ describe('viewer scoped to {vitals}', () => {
     const { data, error } = await vitalsViewer.client
       .from(table)
       .select('id')
-      .eq('user_id', owner.id);
+      .eq(ownerColumn(table), owner.profileId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });
@@ -62,7 +67,7 @@ describe('viewer scoped to {vitals}', () => {
 describe("viewer with {'all'}", () => {
   it('sees every category', async () => {
     for (const table of ['documents', 'medicines', 'vitals', 'profiles'] as const) {
-      const { data } = await allViewer.client.from(table).select('id').eq('user_id', owner.id);
+      const { data } = await allViewer.client.from(table).select('id').eq(ownerColumn(table), owner.profileId);
       expect(data, table).toHaveLength(1);
     }
   });
@@ -72,14 +77,14 @@ describe('caregiver scoped to {medicines}', () => {
   it('can insert into the shared category', async () => {
     const { error } = await medsCaregiver.client
       .from('medicines')
-      .insert({ ...insertPayload('medicines', owner.id), name: 'Scopeozil' });
+      .insert({ ...insertPayload('medicines', owner), name: 'Scopeozil' });
     expect(error).toBeNull();
   });
 
   it('cannot insert into an unshared category', async () => {
     const { error } = await medsCaregiver.client
       .from('documents')
-      .insert(insertPayload('documents', owner.id));
+      .insert(insertPayload('documents', owner));
     expect(error?.code).toBe('42501');
   });
 
@@ -87,7 +92,7 @@ describe('caregiver scoped to {medicines}', () => {
     const { data, error } = await medsCaregiver.client
       .from('documents')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });

@@ -8,7 +8,7 @@ const TODAY = '2026-07-25';
 function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
   return {
     id: '00000000-0000-4000-8000-0000000000e1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-000000000001',
     name: 'Metformin',
     dosage: '500mg',
     frequency: 'twice_daily',

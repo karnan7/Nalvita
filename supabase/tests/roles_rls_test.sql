@@ -57,25 +57,30 @@ from (
     ('55555555-5555-5555-5555-555555555555'::uuid, 'stranger@test.local')
 ) as u (id, email);
 
-insert into public.documents (id, user_id, title, category, file_path, file_type, file_size)
+-- The signup trigger made a profile for each of those accounts. Records hang
+-- off profiles now, so the owner's is pinned here, while the suite is still
+-- superuser: after the first impersonation RLS would hide the row it lives in.
+select set_config('test.owner_profile', (select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111')::text, true);
+
+insert into public.documents (id, profile_id, title, category, file_path, file_type, file_size)
 values (
   'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-  '11111111-1111-1111-1111-111111111111',
+  current_setting('test.owner_profile')::uuid,
   'CBC report', 'lab_report',
-  '11111111-1111-1111-1111-111111111111/cbc.pdf', 'application/pdf', 1000
+  current_setting('test.owner_profile') || '/cbc.pdf', 'application/pdf', 1000
 );
 
-insert into public.vitals (user_id, type, value_1, unit, measured_at)
-values ('11111111-1111-1111-1111-111111111111', 'weight', 72.5, 'kg', now());
+insert into public.vitals (profile_id, type, value_1, unit, measured_at)
+values (current_setting('test.owner_profile')::uuid, 'weight', 72.5, 'kg', now());
 
-insert into public.medicines (user_id, name, dosage, frequency, start_date)
-values ('11111111-1111-1111-1111-111111111111', 'Metformin', '500mg', 'twice_daily', current_date);
+insert into public.medicines (profile_id, name, dosage, frequency, start_date)
+values (current_setting('test.owner_profile')::uuid, 'Metformin', '500mg', 'twice_daily', current_date);
 
 insert into public.circle_memberships (owner_id, member_id, role, shared_categories, status, accepted_at)
 values
-  ('11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333',
+  (current_setting('test.owner_profile')::uuid, '33333333-3333-3333-3333-333333333333',
    'caregiver', '{all}', 'active', now()),
-  ('11111111-1111-1111-1111-111111111111', '44444444-4444-4444-4444-444444444444',
+  (current_setting('test.owner_profile')::uuid, '44444444-4444-4444-4444-444444444444',
    'manager', '{all}', 'active', now());
 
 -- ---------------------------------------------------------------------------
@@ -86,7 +91,7 @@ select pg_temp.impersonate('11111111-1111-1111-1111-111111111111');
 
 select lives_ok(
   $$insert into public.circle_memberships (owner_id, member_id, role, shared_categories)
-    values ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222',
+    values (current_setting('test.owner_profile')::uuid, '22222222-2222-2222-2222-222222222222',
             'viewer', '{vitals}')$$,
   'owner can invite a member'
 );
@@ -95,14 +100,14 @@ select pg_temp.impersonate('22222222-2222-2222-2222-222222222222');
 
 select lives_ok(
   $$update public.circle_memberships set status = 'active'
-    where owner_id = '11111111-1111-1111-1111-111111111111'
+    where owner_id = current_setting('test.owner_profile')::uuid
       and member_id = '22222222-2222-2222-2222-222222222222'$$,
   'member can accept a pending invite'
 );
 
 select throws_ok(
   $$update public.circle_memberships set role = 'manager'
-    where owner_id = '11111111-1111-1111-1111-111111111111'
+    where owner_id = current_setting('test.owner_profile')::uuid
       and member_id = '22222222-2222-2222-2222-222222222222'$$,
   'P0001', null,
   'member cannot escalate their own role'
@@ -132,13 +137,13 @@ select is(
 );
 
 select throws_ok(
-  $$insert into public.vitals (user_id, type, value_1, unit, measured_at)
-    values ('11111111-1111-1111-1111-111111111111', 'weight', 70, 'kg', now())$$,
+  $$insert into public.vitals (profile_id, type, value_1, unit, measured_at)
+    values (current_setting('test.owner_profile')::uuid, 'weight', 70, 'kg', now())$$,
   '42501', null,
   'viewer cannot insert even in the shared category'
 );
 
-delete from public.vitals where user_id = '11111111-1111-1111-1111-111111111111';
+delete from public.vitals where profile_id = current_setting('test.owner_profile')::uuid;
 
 select is(
   (select count(*) from public.vitals),
@@ -159,8 +164,9 @@ select is(
 );
 
 select lives_ok(
-  $$insert into public.medicines (user_id, name, dosage, frequency, start_date)
-    values ('11111111-1111-1111-1111-111111111111', 'Amlodipine', '5mg', 'once_daily', current_date)$$,
+  $$insert into public.medicines (profile_id, name, dosage, frequency, start_date)
+    values (current_setting('test.owner_profile')::uuid, 'Amlodipine', '5mg', 'once_daily',
+            current_date)$$,
   'caregiver can insert a medicine on behalf of the owner'
 );
 
@@ -174,7 +180,7 @@ select is(
 
 select pg_temp.impersonate('33333333-3333-3333-3333-333333333333');
 
-delete from public.documents where user_id = '11111111-1111-1111-1111-111111111111';
+delete from public.documents where profile_id = current_setting('test.owner_profile')::uuid;
 
 select is(
   (select count(*) from public.documents),
@@ -188,7 +194,7 @@ select is(
 
 select pg_temp.impersonate('44444444-4444-4444-4444-444444444444');
 
-delete from public.documents where user_id = '11111111-1111-1111-1111-111111111111';
+delete from public.documents where profile_id = current_setting('test.owner_profile')::uuid;
 
 select is(
   (select count(*) from public.documents),
@@ -204,7 +210,7 @@ select pg_temp.impersonate('11111111-1111-1111-1111-111111111111');
 
 select lives_ok(
   $$update public.circle_memberships set status = 'revoked'
-    where owner_id = '11111111-1111-1111-1111-111111111111'
+    where owner_id = current_setting('test.owner_profile')::uuid
       and member_id = '22222222-2222-2222-2222-222222222222'$$,
   'owner can revoke a membership'
 );
@@ -249,7 +255,7 @@ select pg_temp.impersonate('11111111-1111-1111-1111-111111111111');
 
 select lives_ok(
   $$insert into public.audit_log (actor_id, owner_id, action, resource_type)
-    values ('11111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111',
+    values ('11111111-1111-1111-1111-111111111111', current_setting('test.owner_profile')::uuid,
             'added_vital', 'vitals')$$,
   'owner can append to their own audit log'
 );
@@ -258,7 +264,7 @@ select pg_temp.impersonate('33333333-3333-3333-3333-333333333333');
 
 select lives_ok(
   $$insert into public.audit_log (actor_id, owner_id, action, resource_type)
-    values ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111111',
+    values ('33333333-3333-3333-3333-333333333333', current_setting('test.owner_profile')::uuid,
             'added_medicine', 'medicines')$$,
   'circle member can append audit entries about the owner'
 );

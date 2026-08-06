@@ -4,7 +4,7 @@ import { isoDateTime } from './shared.js';
 /** A doctor's contact card. */
 export const doctorSchema = z.object({
   id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  profile_id: z.string().uuid(),
   name: z.string().min(1),
   specialty: z.string().nullable(),
   hospital: z.string().nullable(),
@@ -18,7 +18,7 @@ export type Doctor = z.infer<typeof doctorSchema>;
 
 export const doctorInsertSchema = doctorSchema.omit({
   id: true,
-  user_id: true,
+  profile_id: true,
   created_at: true,
   updated_at: true,
 });

@@ -19,15 +19,15 @@ export interface DoctorFormValues {
 
 /** The active profile's doctors, newest first. */
 export function useDoctors() {
-  const { userId } = useActiveProfile();
+  const { profileId } = useActiveProfile();
   return useQuery({
-    queryKey: ['doctors', userId],
-    enabled: Boolean(userId),
+    queryKey: ['doctors', profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<Doctor[]> => {
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return doctorListSchema.parse(data);
@@ -46,14 +46,14 @@ function toRow(values: DoctorFormValues) {
 }
 
 /** Adds a new doctor. */
-export function useAddDoctor(userId: string) {
+export function useAddDoctor(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: DoctorFormValues): Promise<Doctor> => {
       const insert = doctorInsertSchema.parse(toRow(values));
       const { data, error } = await supabase
         .from('doctors')
-        .insert({ ...insert, user_id: userId })
+        .insert({ ...insert, profile_id: profileId })
         .select()
         .single();
       if (error) throw error;

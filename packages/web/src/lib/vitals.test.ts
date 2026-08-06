@@ -11,7 +11,7 @@ import {
 function makeVital(overrides: Partial<Vital> = {}): Vital {
   return {
     id: '00000000-0000-4000-8000-0000000000f1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-000000000001',
     type: 'blood_pressure',
     value_1: 128,
     value_2: 84,

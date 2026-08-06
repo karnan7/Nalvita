@@ -198,6 +198,48 @@ describe('auditLogInsertSchema', () => {
   });
 });
 
+describe('profileSchema ownership', () => {
+  const base = {
+    id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    full_name: 'Amma',
+    date_of_birth: '1962-04-01',
+    gender: 'female',
+    blood_group: 'O+',
+    height_cm: null,
+    weight_kg: null,
+    created_at: '2026-08-05T10:00:00+00:00',
+    updated_at: '2026-08-05T10:00:00+00:00',
+  };
+
+  it('accepts a managed profile, which has no account of its own', () => {
+    const result = profileSchema.safeParse({
+      ...base,
+      user_id: null,
+      managed_by: '11111111-1111-1111-1111-111111111111',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts a self-managed profile, which has no manager', () => {
+    const result = profileSchema.safeParse({
+      ...base,
+      user_id: '11111111-1111-1111-1111-111111111111',
+      managed_by: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('never lets an update touch who owns the profile', () => {
+    const parsed = profileUpdateSchema.parse({
+      full_name: 'Amma',
+      user_id: '22222222-2222-2222-2222-222222222222',
+      managed_by: '22222222-2222-2222-2222-222222222222',
+    } as never);
+    expect(parsed).not.toHaveProperty('user_id');
+    expect(parsed).not.toHaveProperty('managed_by');
+  });
+});
+
 describe('auditEventSchema', () => {
   const base = {
     owner_id: '11111111-1111-1111-1111-111111111111',
@@ -297,7 +339,7 @@ describe('full-row schemas parse database rows', () => {
   it('medicineSchema accepts a realistic row', () => {
     const result = medicineSchema.safeParse({
       id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-      user_id: '11111111-1111-1111-1111-111111111111',
+      profile_id: '11111111-1111-1111-1111-111111111111',
       name: 'Metformin',
       dosage: '500mg',
       frequency: 'twice_daily',
@@ -318,6 +360,7 @@ describe('full-row schemas parse database rows', () => {
     const result = profileSchema.safeParse({
       id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
       user_id: '11111111-1111-1111-1111-111111111111',
+      managed_by: null,
       full_name: null,
       date_of_birth: null,
       gender: null,
@@ -333,7 +376,7 @@ describe('full-row schemas parse database rows', () => {
   it('vitalSchema enforces the diastolic rule on full rows too', () => {
     const base = {
       id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
-      user_id: '11111111-1111-1111-1111-111111111111',
+      profile_id: '11111111-1111-1111-1111-111111111111',
       type: 'blood_pressure',
       value_1: 118,
       unit: 'mmHg',

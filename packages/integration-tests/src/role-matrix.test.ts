@@ -28,14 +28,14 @@ beforeAll(async () => {
 
   const { data: doc } = await owner.client
     .from('documents')
-    .insert(insertPayload('documents', owner.id))
+    .insert(insertPayload('documents', owner))
     .select('id')
     .single();
   documentId = doc!.id as string;
 
   const { data: vital } = await owner.client
     .from('vitals')
-    .insert(insertPayload('vitals', owner.id))
+    .insert(insertPayload('vitals', owner))
     .select('id')
     .single();
   vitalId = vital!.id as string;
@@ -50,20 +50,20 @@ describe('viewer', () => {
     const { data: docs } = await viewer.client
       .from('documents')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(docs).toHaveLength(1);
 
     const { data: vitals } = await viewer.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(vitals).toHaveLength(1);
   });
 
   it('cannot insert', async () => {
     const { error } = await viewer.client
       .from('vitals')
-      .insert(insertPayload('vitals', owner.id));
+      .insert(insertPayload('vitals', owner));
     expect(error?.code).toBe('42501');
   });
 
@@ -91,23 +91,23 @@ describe('caregiver', () => {
     const { data } = await caregiver.client
       .from('documents')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(data).toHaveLength(1);
   });
 
   it('can insert on behalf of the owner, and the row belongs to the owner', async () => {
     const { data, error } = await caregiver.client
       .from('vitals')
-      .insert({ ...insertPayload('vitals', owner.id), value_1: 71.0 })
+      .insert({ ...insertPayload('vitals', owner), value_1: 71.0 })
       .select()
       .single();
     expect(error).toBeNull();
-    expect(data!.user_id).toBe(owner.id);
+    expect(data!.profile_id).toBe(owner.profileId);
 
     const { data: ownerView } = await owner.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(ownerView).toHaveLength(2);
   });
 
@@ -136,12 +136,12 @@ describe('manager', () => {
     const { data: docs } = await manager.client
       .from('documents')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(docs).toHaveLength(1);
 
     const { error: insertError } = await manager.client
       .from('medicines')
-      .insert(insertPayload('medicines', owner.id));
+      .insert(insertPayload('medicines', owner));
     expect(insertError).toBeNull();
 
     const { error: updateError } = await manager.client

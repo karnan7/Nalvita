@@ -3,11 +3,11 @@ import { ConditionSection } from '@/components/profile/condition-section';
 import { DoctorSection } from '@/components/profile/doctor-section';
 import { PersonalDetailsSection } from '@/components/profile/personal-details-section';
 import { useActiveProfile } from '@/lib/active-profile-context';
-import { useProfile } from '@/lib/profile';
+import { useProfileById } from '@/lib/profile';
 
 export default function ProfilePage() {
-  const { userId, isSelf } = useActiveProfile();
-  const { data: profile, isPending, isError } = useProfile(userId);
+  const { profileId, isSelf } = useActiveProfile();
+  const { data: profile, isPending, isError } = useProfileById(profileId);
 
   const title = isSelf ? 'My profile' : `${profile?.full_name?.trim() || 'Their'} profile`;
 

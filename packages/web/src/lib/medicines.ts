@@ -83,15 +83,15 @@ export function formatMedDate(date: string): string {
 
 /** The active profile's medicines, newest first. */
 export function useMedicines() {
-  const { userId } = useActiveProfile();
+  const { profileId } = useActiveProfile();
   return useQuery({
-    queryKey: ['medicines', userId],
-    enabled: Boolean(userId),
+    queryKey: ['medicines', profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<Medicine[]> => {
       const { data, error } = await supabase
         .from('medicines')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return medicineListSchema.parse(data);
@@ -114,14 +114,14 @@ function toRow(values: MedicineFormValues) {
 }
 
 /** Adds a new medicine; status defaults to active. */
-export function useAddMedicine(userId: string) {
+export function useAddMedicine(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: MedicineFormValues): Promise<Medicine> => {
       const insert = medicineInsertSchema.parse(toRow(values));
       const { data, error } = await supabase
         .from('medicines')
-        .insert({ ...insert, user_id: userId })
+        .insert({ ...insert, profile_id: profileId })
         .select()
         .single();
       if (error) throw error;

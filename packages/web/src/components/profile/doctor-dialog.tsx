@@ -30,8 +30,8 @@ function formFromDoctor(doctor: Doctor): DoctorFormValues {
 }
 
 export function DoctorDialog({ open, onClose, doctor }: Readonly<DoctorDialogProps>) {
-  const { userId } = useActiveProfile();
-  const add = useAddDoctor(userId);
+  const { profileId } = useActiveProfile();
+  const add = useAddDoctor(profileId);
   const update = useUpdateDoctor();
   const isEditing = Boolean(doctor);
   const mutation = isEditing ? update : add;

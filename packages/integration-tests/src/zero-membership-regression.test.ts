@@ -3,6 +3,7 @@ import { admin, createTestUser, deleteTestUsers, type TestUser } from './helpers
 import {
   HEALTH_TABLES,
   insertPayload,
+  ownerColumn,
   seedAllTables,
   UPDATE_PROBE,
   type HealthTable,
@@ -33,7 +34,7 @@ it('precondition: no circle_memberships involve these users', async () => {
   const { data, error } = await admin
     .from('circle_memberships')
     .select('id')
-    .or(`owner_id.eq.${owner.id},member_id.eq.${owner.id},member_id.eq.${outsider.id}`);
+    .or(`owner_id.eq.${owner.profileId},member_id.eq.${owner.id},member_id.eq.${outsider.id}`);
   expect(error).toBeNull();
   expect(data).toHaveLength(0);
 });
@@ -43,7 +44,7 @@ describe.each([...HEALTH_TABLES])('owner-only behavior on %s', (table) => {
     const { data, error } = await outsider.client
       .from(table)
       .select('*')
-      .eq('user_id', owner.id);
+      .eq(ownerColumn(table), owner.profileId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });
@@ -51,10 +52,10 @@ describe.each([...HEALTH_TABLES])('owner-only behavior on %s', (table) => {
   it('outsider cannot insert a row for the owner', async () => {
     const payload =
       table === 'profiles'
-        ? // The owner's profile already exists; RLS must reject before the
-          // unique constraint is even reached.
-          { user_id: owner.id }
-        : insertPayload(table, owner.id);
+        ? // Claiming to manage a profile you have no business managing is the
+          // profiles-table equivalent of inserting a row for someone else.
+          { managed_by: owner.id }
+        : insertPayload(table, owner);
     const { error } = await outsider.client.from(table).insert(payload);
     expect(error).not.toBeNull();
     expect(error!.code).toBe('42501');

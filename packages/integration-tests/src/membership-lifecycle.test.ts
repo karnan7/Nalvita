@@ -19,7 +19,7 @@ beforeAll(async () => {
   member = await createTestUser('life-member');
   stranger = await createTestUser('life-stranger');
 
-  await owner.client.from('vitals').insert(insertPayload('vitals', owner.id));
+  await owner.client.from('vitals').insert(insertPayload('vitals', owner));
   membershipId = await invite(owner, member, 'viewer', ['all']);
 });
 
@@ -39,7 +39,7 @@ describe('pending', () => {
     const { data: vitals } = await member.client
       .from('vitals')
       .select('id')
-      .eq('user_id', owner.id);
+      .eq('profile_id', owner.profileId);
     expect(vitals).toHaveLength(0);
   });
 
@@ -61,7 +61,7 @@ describe('pending', () => {
 
   it('owner cannot invite themselves', async () => {
     const { error } = await owner.client.from('circle_memberships').insert({
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       member_id: owner.id,
       role: 'viewer',
       shared_categories: ['all'],
@@ -72,7 +72,7 @@ describe('pending', () => {
 
   it('owner cannot invite the same member twice', async () => {
     const { error } = await owner.client.from('circle_memberships').insert({
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       member_id: member.id,
       role: 'viewer',
       shared_categories: ['all'],
@@ -86,7 +86,7 @@ describe('active', () => {
   it('member accepts and gains access immediately', async () => {
     await accept(member, membershipId);
 
-    const { data } = await member.client.from('vitals').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('vitals').select('id').eq('profile_id', owner.profileId);
     expect(data).toHaveLength(1);
   });
 
@@ -117,7 +117,7 @@ describe('revoked', () => {
   it('owner revokes; access is lost immediately', async () => {
     await revoke(owner, membershipId);
 
-    const { data } = await member.client.from('vitals').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('vitals').select('id').eq('profile_id', owner.profileId);
     expect(data).toHaveLength(0);
   });
 

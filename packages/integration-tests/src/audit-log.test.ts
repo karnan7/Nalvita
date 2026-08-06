@@ -34,7 +34,7 @@ describe('appending', () => {
       .from('audit_log')
       .insert({
         actor_id: owner.id,
-        owner_id: owner.id,
+        owner_id: owner.profileId,
         action: 'added_vital',
         resource_type: 'vitals',
       })
@@ -47,7 +47,7 @@ describe('appending', () => {
   it('circle member can append about the owner', async () => {
     const { error } = await member.client.from('audit_log').insert({
       actor_id: member.id,
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       action: 'viewed_document',
       resource_type: 'documents',
     });
@@ -57,7 +57,7 @@ describe('appending', () => {
   it('entries cannot be written as another actor', async () => {
     const { error } = await owner.client.from('audit_log').insert({
       actor_id: member.id, // spoofed
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       action: 'added_vital',
       resource_type: 'vitals',
     });
@@ -67,7 +67,7 @@ describe('appending', () => {
   it('a stranger cannot append about an owner', async () => {
     const { error } = await stranger.client.from('audit_log').insert({
       actor_id: stranger.id,
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       action: 'viewed_document',
       resource_type: 'documents',
     });
@@ -77,7 +77,7 @@ describe('appending', () => {
   it('a member can only log against categories they can view', async () => {
     const { error: ok } = await vitalsMember.client.from('audit_log').insert({
       actor_id: vitalsMember.id,
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       action: 'viewed_vital',
       resource_type: 'vitals',
     });
@@ -85,7 +85,7 @@ describe('appending', () => {
 
     const { error: denied } = await vitalsMember.client.from('audit_log').insert({
       actor_id: vitalsMember.id,
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       action: 'viewed_document',
       resource_type: 'documents',
     });
@@ -98,7 +98,7 @@ describe('reading', () => {
     const { data, error } = await owner.client
       .from('audit_log')
       .select('*')
-      .eq('owner_id', owner.id);
+      .eq('owner_id', owner.profileId);
     expect(error).toBeNull();
     expect(data!.length).toBeGreaterThanOrEqual(3);
   });
@@ -107,7 +107,7 @@ describe('reading', () => {
     const { data, error } = await member.client
       .from('audit_log')
       .select('id')
-      .eq('owner_id', owner.id);
+      .eq('owner_id', owner.profileId);
     expect(error).toBeNull();
     expect(data).toHaveLength(0);
   });
@@ -118,12 +118,12 @@ describe('append-only', () => {
     const { error } = await owner.client
       .from('audit_log')
       .update({ action: 'tampered' })
-      .eq('owner_id', owner.id);
+      .eq('owner_id', owner.profileId);
     expect(error?.code).toBe('42501');
   });
 
   it('nobody can delete entries — not even the owner', async () => {
-    const { error } = await owner.client.from('audit_log').delete().eq('owner_id', owner.id);
+    const { error } = await owner.client.from('audit_log').delete().eq('owner_id', owner.profileId);
     expect(error?.code).toBe('42501');
   });
 });

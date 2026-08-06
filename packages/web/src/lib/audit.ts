@@ -55,7 +55,7 @@ export async function logAuditEvent(event: AuditEvent): Promise<void> {
  */
 export const auditableRowSchema = z.object({
   id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  profile_id: z.string().uuid(),
 });
 
 export type AuditableRow = z.infer<typeof auditableRowSchema>;
@@ -71,7 +71,7 @@ export function auditRecord(
   row: AuditableRow,
 ): void {
   void logAuditEvent({
-    owner_id: row.user_id,
+    owner_id: row.profile_id,
     action,
     resource_type: resourceType,
     resource_id: row.id,
@@ -91,7 +91,7 @@ export async function deleteAuditedRecord(
     .from(table)
     .delete()
     .eq('id', id)
-    .select('id,user_id')
+    .select('id,profile_id')
     .single();
   if (error) throw error;
   return auditableRowSchema.parse(data);

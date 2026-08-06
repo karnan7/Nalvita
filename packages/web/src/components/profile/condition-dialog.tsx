@@ -37,8 +37,8 @@ function formFromCondition(condition: Condition): ConditionFormValues {
 }
 
 export function ConditionDialog({ open, onClose, condition }: Readonly<ConditionDialogProps>) {
-  const { userId } = useActiveProfile();
-  const add = useAddCondition(userId);
+  const { profileId } = useActiveProfile();
+  const add = useAddCondition(profileId);
   const update = useUpdateCondition();
   const isEditing = Boolean(condition);
   const mutation = isEditing ? update : add;

@@ -46,6 +46,7 @@ export function makeProfileRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000aa',
     user_id: '00000000-0000-4000-8000-000000000001',
+    managed_by: null,
     full_name: null,
     date_of_birth: null,
     gender: null,
@@ -79,7 +80,7 @@ export function stubProfileSelect(row: Record<string, unknown>) {
 export function makeDocumentRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000d1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-0000000000aa',
     title: 'Blood test report',
     category: 'lab_report',
     doctor_name: 'City Lab',
@@ -127,16 +128,28 @@ export function listBuilder(rows: Record<string, unknown>[]) {
   return { select: link };
 }
 
+/**
+ * Routes `profiles` to the signed-in person's row and everything else to the
+ * given list. Records key on a profile id, so every screen resolves that
+ * profile first — a stub that only answered the list table would hang.
+ */
+export function stubListTable(rows: Record<string, unknown>[], profile?: Record<string, unknown>) {
+  vi.mocked(supabase.from).mockImplementation(((table: string) =>
+    table === 'profiles'
+      ? rowBuilder(profile ?? makeProfileRow())
+      : listBuilder(rows)) as never);
+}
+
 /** Makes `supabase.from('documents')` resolve its list query to the given rows. */
 export function stubDocumentsList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
+  stubListTable(rows);
 }
 
 /** A medicines row as PostgREST would return it. */
 export function makeMedicineRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000e1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-0000000000aa',
     name: 'Metformin',
     dosage: '500mg',
     frequency: 'twice_daily',
@@ -155,14 +168,14 @@ export function makeMedicineRow(overrides: Record<string, unknown> = {}) {
 
 /** Makes `supabase.from('medicines')` resolve its list query to the given rows. */
 export function stubMedicinesList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
+  stubListTable(rows);
 }
 
 /** A vitals row as PostgREST would return it (a blood pressure reading by default). */
 export function makeVitalRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000f1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-0000000000aa',
     type: 'blood_pressure',
     value_1: 128,
     value_2: 84,
@@ -176,14 +189,14 @@ export function makeVitalRow(overrides: Record<string, unknown> = {}) {
 
 /** Makes `supabase.from('vitals')` resolve its list query to the given rows. */
 export function stubVitalsList(rows: Record<string, unknown>[]) {
-  vi.mocked(supabase.from).mockReturnValue(listBuilder(rows) as never);
+  stubListTable(rows);
 }
 
 /** An allergies row as PostgREST would return it. */
 export function makeAllergyRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000b1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-0000000000aa',
     allergen: 'Penicillin',
     severity: 'severe',
     reaction: 'Rash and swelling',
@@ -197,7 +210,7 @@ export function makeAllergyRow(overrides: Record<string, unknown> = {}) {
 export function makeConditionRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000c1',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-0000000000aa',
     name: 'Hypertension',
     diagnosis_date: '2020-05-01',
     doctor_name: 'Dr Suresh Pillai',
@@ -213,7 +226,7 @@ export function makeConditionRow(overrides: Record<string, unknown> = {}) {
 export function makeDoctorRow(overrides: Record<string, unknown> = {}) {
   return {
     id: '00000000-0000-4000-8000-0000000000d2',
-    user_id: '00000000-0000-4000-8000-000000000001',
+    profile_id: '00000000-0000-4000-8000-0000000000aa',
     name: 'Dr Suresh Pillai',
     specialty: 'Cardiologist',
     hospital: 'PVS Hospital',

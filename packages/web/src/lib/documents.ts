@@ -68,9 +68,10 @@ export interface DocumentFormValues {
   notes: string | null;
 }
 
-function storagePath(userId: string, type: DocumentMimeType): string {
-  // First path segment must be the owner's uid — the storage RLS policy checks it.
-  return `${userId}/${crypto.randomUUID()}.${EXTENSION_BY_MIME[type]}`;
+function storagePath(profileId: string, type: DocumentMimeType): string {
+  // First path segment names the owning profile — the storage RLS policy
+  // resolves it back to a profile and checks access against that.
+  return `${profileId}/${crypto.randomUUID()}.${EXTENSION_BY_MIME[type]}`;
 }
 
 export function isPdf(document: Pick<Document, 'file_type'>): boolean {
@@ -79,15 +80,15 @@ export function isPdf(document: Pick<Document, 'file_type'>): boolean {
 
 /** The active profile's documents, newest first. */
 export function useDocuments() {
-  const { userId } = useActiveProfile();
+  const { profileId } = useActiveProfile();
   return useQuery({
-    queryKey: ['documents', userId],
-    enabled: Boolean(userId),
+    queryKey: ['documents', profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<Document[]> => {
       const { data, error } = await supabase
         .from('documents')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return documentListSchema.parse(data);
@@ -96,7 +97,7 @@ export function useDocuments() {
 }
 
 /** Uploads the file to the private bucket, then records its metadata row. */
-export function useUploadDocument(userId: string) {
+export function useUploadDocument(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -110,7 +111,7 @@ export function useUploadDocument(userId: string) {
       if (rejection) throw new UploadValidationError(rejection);
 
       const type = file.type as DocumentMimeType;
-      const path = storagePath(userId, type);
+      const path = storagePath(profileId, type);
 
       const { error: uploadError } = await supabase.storage
         .from(BUCKET)
@@ -126,7 +127,7 @@ export function useUploadDocument(userId: string) {
 
       const { data, error } = await supabase
         .from('documents')
-        .insert({ ...insert, user_id: userId })
+        .insert({ ...insert, profile_id: profileId })
         .select()
         .single();
 

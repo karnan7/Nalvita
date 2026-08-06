@@ -55,7 +55,24 @@ export function useProfile(userId: string | undefined) {
   });
 }
 
-export function useUpdateProfile(userId: string) {
+/** Any profile I'm allowed to see, by its own id — mine, or one shared with me. */
+export function useProfileById(profileId: string | undefined) {
+  return useQuery({
+    queryKey: ['profile-by-id', profileId],
+    enabled: Boolean(profileId),
+    queryFn: async (): Promise<Profile> => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', profileId as string)
+        .single();
+      if (error) throw error;
+      return profileSchema.parse(data);
+    },
+  });
+}
+
+export function useUpdateProfile(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (update: ProfileUpdate): Promise<Profile> => {
@@ -63,15 +80,17 @@ export function useUpdateProfile(userId: string) {
       const { data, error } = await supabase
         .from('profiles')
         .update(payload)
-        .eq('user_id', userId)
+        .eq('id', profileId)
         .select()
         .single();
       if (error) throw error;
       return profileSchema.parse(data);
     },
     onSuccess: (profile) => {
-      auditRecord('updated', 'profiles', profile);
-      queryClient.setQueryData(['profile', userId], profile);
+      // A profile is its own subject, so it is both the record and its owner.
+      auditRecord('updated', 'profiles', { id: profile.id, profile_id: profile.id });
+      queryClient.setQueryData(['profile-by-id', profileId], profile);
+      if (profile.user_id) queryClient.setQueryData(['profile', profile.user_id], profile);
     },
   });
 }

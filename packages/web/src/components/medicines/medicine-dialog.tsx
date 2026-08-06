@@ -59,8 +59,8 @@ function formFromMedicine(medicine: Medicine): MedicineFormValues {
 }
 
 export function MedicineDialog({ open, onClose, medicine }: Readonly<MedicineDialogProps>) {
-  const { userId } = useActiveProfile();
-  const add = useAddMedicine(userId);
+  const { profileId } = useActiveProfile();
+  const add = useAddMedicine(profileId);
   const update = useUpdateMedicine();
   const isEditing = Boolean(medicine);
   const mutation = isEditing ? update : add;
