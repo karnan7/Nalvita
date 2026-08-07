@@ -9,7 +9,7 @@ import { isoDateTime } from './shared.js';
 export const vitalSchema = z
   .object({
     id: z.string().uuid(),
-    user_id: z.string().uuid(),
+    profile_id: z.string().uuid(),
     type: z.enum(VITAL_TYPES),
     value_1: z.number(),
     value_2: z.number().nullable(),

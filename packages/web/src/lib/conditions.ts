@@ -40,15 +40,15 @@ export function formatConditionDate(date: string): string {
 
 /** The active profile's conditions, newest first. */
 export function useConditions() {
-  const { userId } = useActiveProfile();
+  const { profileId } = useActiveProfile();
   return useQuery({
-    queryKey: ['conditions', userId],
-    enabled: Boolean(userId),
+    queryKey: ['conditions', profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<Condition[]> => {
       const { data, error } = await supabase
         .from('conditions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return conditionListSchema.parse(data);
@@ -67,14 +67,14 @@ function toRow(values: ConditionFormValues) {
 }
 
 /** Adds a new condition; status defaults to active. */
-export function useAddCondition(userId: string) {
+export function useAddCondition(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: ConditionFormValues): Promise<Condition> => {
       const insert = conditionInsertSchema.parse(toRow(values));
       const { data, error } = await supabase
         .from('conditions')
-        .insert({ ...insert, user_id: userId })
+        .insert({ ...insert, profile_id: profileId })
         .select()
         .single();
       if (error) throw error;

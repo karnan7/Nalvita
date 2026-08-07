@@ -41,15 +41,15 @@ export interface AllergyFormValues {
 
 /** The active profile's allergies, newest first. */
 export function useAllergies() {
-  const { userId } = useActiveProfile();
+  const { profileId } = useActiveProfile();
   return useQuery({
-    queryKey: ['allergies', userId],
-    enabled: Boolean(userId),
+    queryKey: ['allergies', profileId],
+    enabled: Boolean(profileId),
     queryFn: async (): Promise<Allergy[]> => {
       const { data, error } = await supabase
         .from('allergies')
         .select('*')
-        .eq('user_id', userId)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false });
       if (error) throw error;
       return allergyListSchema.parse(data);
@@ -66,14 +66,14 @@ function toRow(values: AllergyFormValues) {
 }
 
 /** Adds a new allergy. */
-export function useAddAllergy(userId: string) {
+export function useAddAllergy(profileId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: AllergyFormValues): Promise<Allergy> => {
       const insert = allergyInsertSchema.parse(toRow(values));
       const { data, error } = await supabase
         .from('allergies')
-        .insert({ ...insert, user_id: userId })
+        .insert({ ...insert, profile_id: profileId })
         .select()
         .single();
       if (error) throw error;

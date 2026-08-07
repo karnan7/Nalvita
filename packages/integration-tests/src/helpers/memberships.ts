@@ -11,7 +11,7 @@ export async function invite(
   const { data, error } = await owner.client
     .from('circle_memberships')
     .insert({
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       member_id: member.id,
       role,
       shared_categories: categories,

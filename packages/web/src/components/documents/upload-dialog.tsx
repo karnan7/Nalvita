@@ -35,8 +35,8 @@ interface UploadDialogProps {
 }
 
 export function UploadDialog({ open, onClose }: Readonly<UploadDialogProps>) {
-  const { userId } = useActiveProfile();
-  const upload = useUploadDocument(userId);
+  const { profileId } = useActiveProfile();
+  const upload = useUploadDocument(profileId);
   const fileInputId = useId();
   const fileInputRef = useRef<HTMLInputElement>(null);
 

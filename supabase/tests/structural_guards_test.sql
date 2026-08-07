@@ -152,11 +152,17 @@ from (
     ('55555555-5555-5555-5555-555555555555'::uuid, 'stranger@test.local')
 ) as u (id, email);
 
-insert into public.vitals (user_id, type, value_1, unit, measured_at)
-values ('11111111-1111-1111-1111-111111111111', 'weight', 72.5, 'kg', now());
+-- Records hang off the profile the signup trigger just created. Pinned here,
+-- while still superuser: later statements run as impersonated roles that RLS
+-- would stop from reading the profiles row.
+select set_config('test.owner_profile', (select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111')::text, true);
+
+-- Records hang off the profile the signup trigger just created.
+insert into public.vitals (profile_id, type, value_1, unit, measured_at)
+values ((select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111'), 'weight', 72.5, 'kg', now());
 
 insert into public.circle_memberships (owner_id, member_id, role, shared_categories, status)
-values ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222',
+values ((select id from public.profiles where user_id = '11111111-1111-1111-1111-111111111111'), '22222222-2222-2222-2222-222222222222',
         'viewer', '{all}', 'pending');
 
 -- ---------------------------------------------------------------------------
@@ -191,7 +197,7 @@ select pg_temp.impersonate('22222222-2222-2222-2222-222222222222');
 
 select lives_ok(
   $$update public.circle_memberships set status = 'active'
-    where owner_id = '11111111-1111-1111-1111-111111111111'
+    where owner_id = current_setting('test.owner_profile')::uuid
       and member_id = '22222222-2222-2222-2222-222222222222'$$,
   'member can accept the pending invite');
 
@@ -215,7 +221,7 @@ select throws_ok(
 
 select lives_ok(
   $$update public.circle_memberships set status = 'revoked'
-    where owner_id = '11111111-1111-1111-1111-111111111111'
+    where owner_id = current_setting('test.owner_profile')::uuid
       and member_id = '22222222-2222-2222-2222-222222222222'$$,
   'owner can revoke the membership');
 
@@ -223,7 +229,7 @@ select pg_temp.impersonate('22222222-2222-2222-2222-222222222222');
 
 select throws_ok(
   $$update public.circle_memberships set status = 'active'
-    where owner_id = '11111111-1111-1111-1111-111111111111'
+    where owner_id = current_setting('test.owner_profile')::uuid
       and member_id = '22222222-2222-2222-2222-222222222222'$$,
   'P0001', null,
   'a revoked member cannot re-accept the invite');

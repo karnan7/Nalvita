@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import { ActiveProfileContext } from '@/lib/active-profile-context';
 import { useAuth } from '@/lib/auth-context';
+import { useProfile } from '@/lib/profile';
 
 /** How a family member is referred to when they have not set a name. */
 export function viewingName(person: CirclePerson | null): string {
@@ -21,7 +22,10 @@ export function viewingName(person: CirclePerson | null): string {
  */
 export function ActiveProfileProvider({ children }: Readonly<{ children: ReactNode }>) {
   const { session } = useAuth();
-  const selfId = session?.user.id ?? '';
+  // Records belong to profiles, so the app needs my *profile* id, which only
+  // my profile row can give: the session knows my account, not my identity here.
+  const { data: myProfile } = useProfile(session?.user.id);
+  const selfId = myProfile?.id ?? '';
 
   const [viewing, setViewing] = useState<CirclePerson | null>(null);
   const [confirmed, setConfirmed] = useState(false);
@@ -63,7 +67,7 @@ export function ActiveProfileProvider({ children }: Readonly<{ children: ReactNo
 
   const value = useMemo(
     () => ({
-      userId: viewing?.counterpart_id ?? selfId,
+      profileId: viewing?.counterpart_id ?? selfId,
       isSelf: viewing === null,
       viewing,
       setViewing: switchTo,

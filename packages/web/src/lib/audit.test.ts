@@ -145,7 +145,7 @@ describe('logAuditEvent', () => {
   });
 
   it('logs a record against its owner, not the person acting', () => {
-    auditRecord('updated', 'medicines', { id: RECORD, user_id: OWNER });
+    auditRecord('updated', 'medicines', { id: RECORD, profile_id: OWNER });
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'log_audit_event',
@@ -160,14 +160,14 @@ describe('deleteAuditedRecord', () => {
   });
 
   it('selects the owner back from the deleted row', async () => {
-    const single = vi.fn(async () => ({ data: { id: RECORD, user_id: OWNER }, error: null }));
+    const single = vi.fn(async () => ({ data: { id: RECORD, profile_id: OWNER }, error: null }));
     vi.mocked(supabase.from).mockReturnValue({
       delete: () => ({ eq: () => ({ select: () => ({ single }) }) }),
     } as never);
 
     await expect(deleteAuditedRecord('vitals', RECORD)).resolves.toEqual({
       id: RECORD,
-      user_id: OWNER,
+      profile_id: OWNER,
     });
     expect(supabase.from).toHaveBeenCalledWith('vitals');
   });
@@ -192,7 +192,7 @@ describe('auditedInvalidate', () => {
     const queryClient = new QueryClient();
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
 
-    await auditedInvalidate(queryClient, 'deleted', 'allergies')({ id: RECORD, user_id: OWNER });
+    await auditedInvalidate(queryClient, 'deleted', 'allergies')({ id: RECORD, profile_id: OWNER });
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'log_audit_event',

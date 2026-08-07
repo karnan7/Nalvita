@@ -6,7 +6,7 @@ import { activeMedicines, lastCheckupDate, latestByVitalType, refillDueCount } f
 function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
   return {
     id: 'm1',
-    user_id: 'u1',
+    profile_id: 'u1',
     name: 'Metformin',
     dosage: '500mg',
     frequency: 'twice_daily',
@@ -26,7 +26,7 @@ function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
 function makeDocument(overrides: Partial<Document> = {}): Document {
   return {
     id: 'd1',
-    user_id: 'u1',
+    profile_id: 'u1',
     title: 'Report',
     category: 'lab_report',
     doctor_name: null,
@@ -43,7 +43,7 @@ function makeDocument(overrides: Partial<Document> = {}): Document {
 function makeVital(overrides: Partial<Vital> = {}): Vital {
   return {
     id: 'v1',
-    user_id: 'u1',
+    profile_id: 'u1',
     type: 'weight',
     value_1: 70,
     value_2: null,

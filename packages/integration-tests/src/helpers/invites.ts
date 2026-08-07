@@ -36,7 +36,7 @@ export async function createInvite(
     .padStart(6, '0');
 
   const row: Record<string, unknown> = {
-    owner_id: owner.id,
+    owner_id: owner.profileId,
     token_hash: sha256Hex(token),
     code_hash: sha256Hex(code),
     invitee_email: options.email ?? null,

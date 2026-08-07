@@ -18,7 +18,10 @@ export const supabaseAnonKey = config.anonKey;
 const TEST_PASSWORD = 'integration-test-password';
 
 export interface TestUser {
+  /** Their auth account. */
   id: string;
+  /** Their profile — what health records, memberships and invites key on. */
+  profileId: string;
   email: string;
   client: SupabaseClient;
 }
@@ -48,7 +51,17 @@ export async function createTestUser(label: string): Promise<TestUser> {
     throw new Error(`Failed to sign in test user: ${signInError.message}`);
   }
 
-  return { id: data.user.id, email, client };
+  // The signup trigger creates the profile; every record hangs off it.
+  const { data: profile, error: profileError } = await client
+    .from('profiles')
+    .select('id')
+    .eq('user_id', data.user.id)
+    .single();
+  if (profileError) {
+    throw new Error(`Failed to read the new user's profile: ${profileError.message}`);
+  }
+
+  return { id: data.user.id, profileId: profile.id as string, email, client };
 }
 
 /** Deletes test users; row cleanup happens via ON DELETE CASCADE. */

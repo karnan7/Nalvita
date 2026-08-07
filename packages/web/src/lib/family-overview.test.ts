@@ -28,7 +28,7 @@ function person(overrides: Partial<CirclePerson> = {}): CirclePerson {
 function medicine(overrides: Partial<Medicine> = {}): Medicine {
   return {
     id: '00000000-0000-4000-8000-0000000000e1',
-    user_id: '00000000-0000-4000-8000-000000000002',
+    profile_id: '00000000-0000-4000-8000-000000000002',
     name: 'Metformin',
     dosage: '500mg',
     frequency: 'twice_daily',
@@ -48,7 +48,7 @@ function medicine(overrides: Partial<Medicine> = {}): Medicine {
 function vital(measuredAt: string): Vital {
   return {
     id: '00000000-0000-4000-8000-0000000000f1',
-    user_id: '00000000-0000-4000-8000-000000000002',
+    profile_id: '00000000-0000-4000-8000-000000000002',
     type: 'blood_pressure',
     value_1: 132,
     value_2: 86,

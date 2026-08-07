@@ -6,7 +6,7 @@ import { buildTimeline, buildTimelineEvents, filterTimelineEvents } from './time
 function makeDocument(overrides: Partial<Document> = {}): Document {
   return {
     id: 'd1',
-    user_id: 'u1',
+    profile_id: 'u1',
     title: 'Blood test',
     category: 'lab_report',
     doctor_name: null,
@@ -23,7 +23,7 @@ function makeDocument(overrides: Partial<Document> = {}): Document {
 function makeVital(overrides: Partial<Vital> = {}): Vital {
   return {
     id: 'v1',
-    user_id: 'u1',
+    profile_id: 'u1',
     type: 'blood_pressure',
     value_1: 120,
     value_2: 80,
@@ -38,7 +38,7 @@ function makeVital(overrides: Partial<Vital> = {}): Vital {
 function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
   return {
     id: 'm1',
-    user_id: 'u1',
+    profile_id: 'u1',
     name: 'Metformin',
     dosage: '500mg',
     frequency: 'twice_daily',
@@ -58,7 +58,7 @@ function makeMedicine(overrides: Partial<Medicine> = {}): Medicine {
 function makeCondition(overrides: Partial<Condition> = {}): Condition {
   return {
     id: 'c1',
-    user_id: 'u1',
+    profile_id: 'u1',
     name: 'Hypertension',
     diagnosis_date: '2020-05-01',
     doctor_name: 'Dr Pillai',

@@ -4,10 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UploadDialog } from './upload-dialog';
 import { supabase } from '@/lib/supabase';
-import { makeDocumentRow, makeSession } from '@/test/mocks/supabase';
+import { makeDocumentRow, makeProfileRow, makeSession, rowBuilder } from '@/test/mocks/supabase';
 import { renderWithProviders } from '@/test/render';
 
-const USER_ID = '00000000-0000-4000-8000-000000000001';
+const PROFILE_ID = '00000000-0000-4000-8000-0000000000aa';
 
 beforeEach(() => {
   vi.mocked(supabase.auth.getSession).mockResolvedValue({
@@ -37,7 +37,8 @@ describe('UploadDialog', () => {
     const single = vi.fn(async () => ({ data: makeDocumentRow(), error: null }));
     const select = vi.fn(() => ({ single }));
     const insert = vi.fn(() => ({ select }));
-    vi.mocked(supabase.from).mockReturnValue({ insert } as never);
+    vi.mocked(supabase.from).mockImplementation(((table: string) =>
+      table === 'profiles' ? rowBuilder(makeProfileRow()) : { insert }) as never);
 
     const onClose = vi.fn();
     const user = userEvent.setup();
@@ -55,12 +56,12 @@ describe('UploadDialog', () => {
 
     const firstCall = upload.mock.calls[0] as unknown[] | undefined;
     const uploadedPath = (firstCall?.[0] as string | undefined) ?? '';
-    expect(uploadedPath.startsWith(`${USER_ID}/`)).toBe(true);
+    expect(uploadedPath.startsWith(`${PROFILE_ID}/`)).toBe(true);
     expect(uploadedPath.endsWith('.pdf')).toBe(true);
 
     expect(insert).toHaveBeenCalledWith(
       expect.objectContaining({
-        user_id: USER_ID,
+        profile_id: PROFILE_ID,
         title: 'report',
         category: 'lab_report',
         doctor_name: 'City Lab',

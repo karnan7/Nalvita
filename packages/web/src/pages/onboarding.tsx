@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { useAuth } from '@/lib/auth-context';
+import { useActiveProfile } from '@/lib/active-profile-context';
 import { GENDER_LABELS, useUpdateProfile } from '@/lib/profile';
 
 export default function OnboardingPage() {
-  const { session } = useAuth();
   const navigate = useNavigate();
-  const userId = session?.user.id ?? '';
-  const updateProfile = useUpdateProfile(userId);
+  const { profileId } = useActiveProfile();
+  const updateProfile = useUpdateProfile(profileId);
 
   const [fullName, setFullName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');

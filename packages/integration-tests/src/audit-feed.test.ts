@@ -49,7 +49,7 @@ beforeAll(async () => {
   const { data, error } = await owner.client
     .from('documents')
     .insert({
-      user_id: owner.id,
+      profile_id: owner.profileId,
       title: 'Chest X-ray',
       category: 'xray_scan',
       file_path: `${owner.id}/feed-fixture.pdf`,
@@ -69,7 +69,7 @@ afterAll(async () => {
 describe('log_audit_event', () => {
   it('records what a member did, as themselves', async () => {
     const { error } = await log(member, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'viewed',
       type: 'documents',
       id: documentId,
@@ -90,7 +90,7 @@ describe('log_audit_event', () => {
 
   it('rejects a verb outside the shared vocabulary', async () => {
     const { error } = await log(member, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'deleted_everything',
       type: 'documents',
     });
@@ -99,7 +99,7 @@ describe('log_audit_event', () => {
 
   it('rejects a resource type that is not a real category', async () => {
     const { error } = await log(member, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'viewed',
       type: 'secrets',
     });
@@ -108,7 +108,7 @@ describe('log_audit_event', () => {
 
   it('rejects a category the member has no access to', async () => {
     const { error } = await log(member, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'viewed',
       type: 'medicines',
     });
@@ -117,7 +117,7 @@ describe('log_audit_event', () => {
 
   it('rejects a stranger writing into an account entirely', async () => {
     const { error } = await log(stranger, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'viewed',
       type: 'documents',
     });
@@ -126,7 +126,7 @@ describe('log_audit_event', () => {
 
   it('ignores actions on your own account rather than filling your own feed', async () => {
     const { error } = await log(owner, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'added',
       type: 'documents',
       id: documentId,
@@ -142,7 +142,7 @@ describe('log_audit_event', () => {
     const membershipId = await createActiveMembership(owner, temp, 'viewer', ['vitals']);
 
     const { error: allowed } = await log(temp, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'viewed',
       type: 'vitals',
     });
@@ -151,7 +151,7 @@ describe('log_audit_event', () => {
     await revoke(owner, membershipId);
 
     const { error: denied } = await log(temp, {
-      owner: owner.id,
+      owner: owner.profileId,
       action: 'viewed',
       type: 'vitals',
     });
@@ -172,7 +172,7 @@ describe('list_audit_feed', () => {
 
   it('returns newest first and pages without repeating an entry', async () => {
     for (const action of ['viewed', 'updated', 'viewed'] as const) {
-      await log(member, { owner: owner.id, action, type: 'documents', id: documentId });
+      await log(member, { owner: owner.profileId, action, type: 'documents', id: documentId });
     }
 
     const all = await feed(owner);
@@ -201,7 +201,7 @@ describe('list_audit_feed', () => {
     const { data, error } = await owner.client
       .from('vitals')
       .insert({
-        user_id: owner.id,
+        profile_id: owner.profileId,
         type: 'weight',
         value_1: 70,
         unit: 'kg',
@@ -212,7 +212,7 @@ describe('list_audit_feed', () => {
     expect(error).toBeNull();
     const vitalId = data!.id as string;
 
-    await log(member, { owner: owner.id, action: 'deleted', type: 'vitals', id: vitalId });
+    await log(member, { owner: owner.profileId, action: 'deleted', type: 'vitals', id: vitalId });
     await owner.client.from('vitals').delete().eq('id', vitalId);
 
     const entries = await feed(owner);
@@ -233,7 +233,7 @@ describe('joining a circle', () => {
       .join('');
 
     const { error: inviteError } = await owner.client.from('circle_invites').insert({
-      owner_id: owner.id,
+      owner_id: owner.profileId,
       token_hash: tokenHash,
       code_hash: `${tokenHash}-code`,
       requested_role: 'viewer',

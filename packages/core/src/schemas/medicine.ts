@@ -5,7 +5,7 @@ import { isoDate, isoDateTime } from './shared.js';
 /** A current or past medicine with dosage and schedule. */
 export const medicineSchema = z.object({
   id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  profile_id: z.string().uuid(),
   name: z.string().min(1),
   dosage: z.string().min(1),
   frequency: z.enum(MEDICINE_FREQUENCIES),
@@ -24,7 +24,7 @@ export type Medicine = z.infer<typeof medicineSchema>;
 
 /** Payload for adding a medicine; status defaults to active. */
 export const medicineInsertSchema = medicineSchema
-  .omit({ id: true, user_id: true, created_at: true, updated_at: true })
+  .omit({ id: true, profile_id: true, created_at: true, updated_at: true })
   .extend({
     status: z.enum(MEDICINE_STATUSES).default('active'),
   });

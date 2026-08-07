@@ -32,7 +32,7 @@ describe('signup trigger', () => {
     const { data, error } = await owner.client
       .from('profiles')
       .select('*')
-      .eq('user_id', owner.id);
+      .eq('id', owner.profileId);
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
     const profile = profileSchema.parse(data![0]);
@@ -43,7 +43,7 @@ describe('signup trigger', () => {
     const { data, error } = await owner.client
       .from('profiles')
       .update({ full_name: 'Test Owner', blood_group: 'O+' })
-      .eq('user_id', owner.id)
+      .eq('id', owner.profileId)
       .select()
       .single();
     expect(error).toBeNull();
@@ -69,12 +69,13 @@ describe.each(Object.keys(ROW_SCHEMAS) as Exclude<HealthTable, 'profiles'>[])(
     it('inserts a row that parses with the core row schema', async () => {
       const { data, error } = await owner.client
         .from(table)
-        .insert(insertPayload(table, owner.id))
+        .insert(insertPayload(table, owner))
         .select()
         .single();
       expect(error).toBeNull();
       const row = ROW_SCHEMAS[table].parse(data);
-      expect(row.user_id).toBe(owner.id);
+      // A health row belongs to a profile; a profile row records who manages it.
+      expect(row.profile_id).toBe(owner.profileId);
       rowId = row.id;
     });
 

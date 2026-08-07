@@ -10,7 +10,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(11);
 
 -- The bucket itself is untouched by KAR-41 -----------------------------------
 
@@ -60,7 +60,7 @@ select ok(
      and policyname like '%health documents'),
   'deleting someone else file needs manager');
 
--- Path helper fails closed ---------------------------------------------------
+-- Path helper: resolves a profile, and fails closed otherwise ----------------
 
 select is(
   public.document_path_owner('not-a-uuid/report.pdf'),
@@ -68,8 +68,37 @@ select is(
 
 select is(
   public.document_path_owner('11111111-1111-4111-8111-111111111111/report.pdf'),
-  '11111111-1111-4111-8111-111111111111'::uuid,
-  'a well-formed path resolves to its owner');
+  null, 'a well-formed prefix that is nobody resolves to null, not to itself');
+
+-- A real account, so the signup trigger gives us a real profile to resolve to.
+insert into auth.users (
+  instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+  confirmation_token, recovery_token, email_change, email_change_token_new
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '77777777-7777-4777-8777-777777777777', 'authenticated', 'authenticated',
+  'storage-path@test.local', '', now(),
+  '{"provider":"email","providers":["email"]}', '{}', now(), now(),
+  '', '', '', ''
+);
+
+select is(
+  public.document_path_owner(
+    (select p.id from public.profiles p
+     where p.user_id = '77777777-7777-4777-8777-777777777777')::text || '/report.pdf'),
+  (select p.id from public.profiles p
+   where p.user_id = '77777777-7777-4777-8777-777777777777'),
+  'a path under a profile id resolves to that profile');
+
+-- Files uploaded before KAR-48 sit under the uploader's *account* id. They
+-- still have to resolve, or every existing document would become unreachable.
+select is(
+  public.document_path_owner('77777777-7777-4777-8777-777777777777/legacy.pdf'),
+  (select p.id from public.profiles p
+   where p.user_id = '77777777-7777-4777-8777-777777777777'),
+  'a legacy path under an account id resolves to that account profile');
 
 select * from finish();
 rollback;

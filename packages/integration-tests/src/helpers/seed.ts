@@ -14,25 +14,29 @@ export const HEALTH_TABLES = [
 export type HealthTable = (typeof HEALTH_TABLES)[number];
 
 /** Minimal valid insert payload per table (all fixtures obviously fake). */
-export function insertPayload(table: HealthTable, userId: string): Record<string, unknown> {
+export function insertPayload(
+  table: HealthTable,
+  owner: { id: string; profileId: string },
+): Record<string, unknown> {
+  const profileId = owner.profileId;
   switch (table) {
     case 'profiles':
-      // Profiles are auto-created at signup; inserts only happen on behalf
-      // of someone whose profile row is missing.
-      return { user_id: userId };
+      // Profiles are auto-created at signup, so an insert here is only ever a
+      // managed profile: a person with records but no account of their own.
+      return { managed_by: owner.id };
     case 'documents':
       return {
-        user_id: userId,
+        profile_id: profileId,
         title: 'Test report',
         category: 'lab_report',
         doc_date: '2026-07-01',
-        file_path: `${userId}/test-report.pdf`,
+        file_path: `${profileId}/test-report.pdf`,
         file_type: 'application/pdf',
         file_size: 1000,
       };
     case 'medicines':
       return {
-        user_id: userId,
+        profile_id: profileId,
         name: 'Testazol',
         dosage: '10mg',
         frequency: 'once_daily',
@@ -41,7 +45,7 @@ export function insertPayload(table: HealthTable, userId: string): Record<string
       };
     case 'vitals':
       return {
-        user_id: userId,
+        profile_id: profileId,
         type: 'weight',
         value_1: 72.5,
         unit: 'kg',
@@ -49,25 +53,33 @@ export function insertPayload(table: HealthTable, userId: string): Record<string
       };
     case 'allergies':
       return {
-        user_id: userId,
+        profile_id: profileId,
         allergen: 'Test allergen',
         severity: 'mild',
         reaction: 'Test reaction',
       };
     case 'conditions':
       return {
-        user_id: userId,
+        profile_id: profileId,
         name: 'Test condition',
         diagnosis_date: '2026-01-01',
       };
     case 'doctors':
       return {
-        user_id: userId,
+        profile_id: profileId,
         name: 'Dr. Test',
         specialty: 'Testology',
         hospital: 'Test Hospital',
       };
   }
+}
+
+/**
+ * The column naming a row's owner. A profile *is* the owner, so it answers with
+ * its own id; every other health table points at one.
+ */
+export function ownerColumn(table: HealthTable): 'id' | 'profile_id' {
+  return table === 'profiles' ? 'id' : 'profile_id';
 }
 
 /** A column safe to overwrite in update tests, per table. */
@@ -93,7 +105,7 @@ export async function seedAllTables(owner: TestUser): Promise<Record<HealthTable
       const { data, error } = await owner.client
         .from('profiles')
         .select('id')
-        .eq('user_id', owner.id)
+        .eq('id', owner.profileId)
         .single();
       if (error) throw new Error(`Seed failed reading auto-profile: ${error.message}`);
       ids.profiles = data.id as string;
@@ -102,7 +114,7 @@ export async function seedAllTables(owner: TestUser): Promise<Record<HealthTable
 
     const { data, error } = await owner.client
       .from(table)
-      .insert(insertPayload(table, owner.id))
+      .insert(insertPayload(table, owner))
       .select('id')
       .single();
     if (error) throw new Error(`Seed failed inserting into ${table}: ${error.message}`);

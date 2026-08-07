@@ -27,7 +27,7 @@ async function setAccess(role: string, categories: string[]) {
 
 /** Can the member currently read the owner's medicines? */
 async function memberCanReadMedicines(): Promise<boolean> {
-  const { data } = await member.client.from('medicines').select('id').eq('user_id', owner.id);
+  const { data } = await member.client.from('medicines').select('id').eq('profile_id', owner.profileId);
   return (data ?? []).length > 0;
 }
 
@@ -35,8 +35,8 @@ beforeAll(async () => {
   owner = await createTestUser('share-owner');
   member = await createTestUser('share-member');
 
-  await owner.client.from('medicines').insert(insertPayload('medicines', owner.id));
-  await owner.client.from('vitals').insert(insertPayload('vitals', owner.id));
+  await owner.client.from('medicines').insert(insertPayload('medicines', owner));
+  await owner.client.from('vitals').insert(insertPayload('vitals', owner));
 
   membershipId = await createActiveMembership(owner, member, 'caregiver', ['medicines', 'vitals']);
 });
@@ -49,7 +49,7 @@ describe('changing a role', () => {
   it('a caregiver can add records on the owner behalf', async () => {
     const { error } = await member.client
       .from('vitals')
-      .insert(insertPayload('vitals', owner.id));
+      .insert(insertPayload('vitals', owner));
     expect(error).toBeNull();
   });
 
@@ -58,7 +58,7 @@ describe('changing a role', () => {
 
     const { error } = await member.client
       .from('vitals')
-      .insert(insertPayload('vitals', owner.id));
+      .insert(insertPayload('vitals', owner));
     expect(error?.code).toBe('42501');
 
     // Reading is untouched by the downgrade.
@@ -70,7 +70,7 @@ describe('changing a role', () => {
 
     const { error } = await member.client
       .from('vitals')
-      .insert(insertPayload('vitals', owner.id));
+      .insert(insertPayload('vitals', owner));
     expect(error).toBeNull();
   });
 });
@@ -89,12 +89,12 @@ describe('changing shared categories', () => {
   it('the wildcard shares everything without listing each category', async () => {
     await setAccess('caregiver', ['all']);
 
-    const { data } = await member.client.from('doctors').select('id').eq('user_id', owner.id);
+    const { data } = await member.client.from('doctors').select('id').eq('profile_id', owner.profileId);
     expect(data).toEqual([]); // no doctors exist, but the read is permitted
 
     const { error } = await member.client
       .from('doctors')
-      .insert(insertPayload('doctors', owner.id));
+      .insert(insertPayload('doctors', owner));
     expect(error).toBeNull();
   });
 });

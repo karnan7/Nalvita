@@ -5,11 +5,11 @@ import { StatCards } from '@/components/dashboard/stat-cards';
 import { TimelineCard } from '@/components/dashboard/timeline-card';
 import { VitalsCard } from '@/components/dashboard/vitals-card';
 import { useActiveProfile } from '@/lib/active-profile-context';
-import { useProfile } from '@/lib/profile';
+import { useProfileById } from '@/lib/profile';
 
 export default function DashboardPage() {
-  const { userId, isSelf } = useActiveProfile();
-  const { data: profile } = useProfile(userId);
+  const { profileId, isSelf } = useActiveProfile();
+  const { data: profile } = useProfileById(profileId);
 
   // Greeting only makes sense in your own account; in someone else's the
   // heading says whose records these are, and the banner above repeats it.

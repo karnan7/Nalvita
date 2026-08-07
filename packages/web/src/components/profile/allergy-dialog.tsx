@@ -31,8 +31,8 @@ function formFromAllergy(allergy: Allergy): AllergyFormValues {
 }
 
 export function AllergyDialog({ open, onClose, allergy }: Readonly<AllergyDialogProps>) {
-  const { userId } = useActiveProfile();
-  const add = useAddAllergy(userId);
+  const { profileId } = useActiveProfile();
+  const add = useAddAllergy(profileId);
   const update = useUpdateAllergy();
   const isEditing = Boolean(allergy);
   const mutation = isEditing ? update : add;

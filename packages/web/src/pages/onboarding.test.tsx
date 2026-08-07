@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import OnboardingPage from './onboarding';
 import { supabase } from '@/lib/supabase';
-import { makeProfileRow, makeSession } from '@/test/mocks/supabase';
+import { makeProfileRow, makeSession, rowBuilder } from '@/test/mocks/supabase';
 import { renderWithProviders } from '@/test/render';
 
 beforeEach(() => {
@@ -38,7 +38,11 @@ describe('OnboardingPage', () => {
     const select = vi.fn(() => ({ single }));
     const eq = vi.fn(() => ({ select }));
     const update = vi.fn(() => ({ eq }));
-    vi.mocked(supabase.from).mockReturnValue({ update } as never);
+    // The same table serves both the profile lookup and the save.
+    vi.mocked(supabase.from).mockReturnValue({
+      ...rowBuilder(makeProfileRow()),
+      update,
+    } as never);
 
     const user = userEvent.setup();
     renderWithProviders(<OnboardingPage />, { route: '/onboarding' });
@@ -57,6 +61,6 @@ describe('OnboardingPage', () => {
       }),
     );
     expect(supabase.from).toHaveBeenCalledWith('profiles');
-    expect(eq).toHaveBeenCalledWith('user_id', '00000000-0000-4000-8000-000000000001');
+    expect(eq).toHaveBeenCalledWith('id', '00000000-0000-4000-8000-0000000000aa');
   });
 });

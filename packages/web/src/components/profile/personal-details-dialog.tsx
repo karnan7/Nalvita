@@ -45,7 +45,7 @@ export function PersonalDetailsDialog({
   onClose,
   profile,
 }: Readonly<PersonalDetailsDialogProps>) {
-  const update = useUpdateProfile(profile.user_id);
+  const update = useUpdateProfile(profile.id);
   const [form, setForm] = useState<FormValues>(() => formFromProfile(profile));
 
   useEffect(() => {
