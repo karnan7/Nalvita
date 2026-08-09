@@ -185,6 +185,8 @@ export function describeAuditEntry(entry: AuditFeedEntry): string {
   switch (entry.action) {
     case 'joined_circle':
       return `${who} joined your circle`;
+    case 'handed_over_profile':
+      return `${who} handed this profile over to you — everything before this was added for you`;
     case 'viewed':
       return `${who} viewed ${describeResource(entry)}`;
     case 'added':

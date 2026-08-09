@@ -2,6 +2,7 @@ import {
   ALLERGY_SEVERITIES,
   BLOOD_GROUPS,
   CIRCLE_ROLES,
+  CLAIM_STATUSES,
   CONDITION_STATUSES,
   DOCUMENT_CATEGORIES,
   DOCUMENT_MIME_TYPES,
@@ -44,6 +45,7 @@ describe('Postgres enums mirror constants.ts', () => {
   const EXPECTED_ENUMS: Record<string, readonly string[]> = {
     blood_group: BLOOD_GROUPS,
     circle_role: CIRCLE_ROLES,
+    claim_status: CLAIM_STATUSES,
     invite_status: INVITE_STATUSES,
     membership_status: MEMBERSHIP_STATUSES,
   };

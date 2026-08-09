@@ -8,7 +8,17 @@ import { conditionInsertSchema } from './condition.js';
 import { doctorInsertSchema } from './doctor.js';
 import { documentInsertSchema } from './document.js';
 import { medicineInsertSchema, medicineSchema } from './medicine.js';
-import { profileSchema, profileUpdateSchema } from './profile.js';
+import {
+  isManagedProfile,
+  managedProfileInsertSchema,
+  profileSchema,
+  profileUpdateSchema,
+} from './profile.js';
+import {
+  profileClaimInsertSchema,
+  profileClaimPreviewSchema,
+  profileClaimSummarySchema,
+} from './profile-claim.js';
 import { vitalInsertSchema, vitalSchema } from './vital.js';
 
 describe('profileUpdateSchema', () => {
@@ -207,6 +217,7 @@ describe('profileSchema ownership', () => {
     blood_group: 'O+',
     height_cm: null,
     weight_kg: null,
+    is_minor: false,
     created_at: '2026-08-05T10:00:00+00:00',
     updated_at: '2026-08-05T10:00:00+00:00',
   };
@@ -237,6 +248,129 @@ describe('profileSchema ownership', () => {
     } as never);
     expect(parsed).not.toHaveProperty('user_id');
     expect(parsed).not.toHaveProperty('managed_by');
+  });
+});
+
+describe('managedProfileInsertSchema', () => {
+  it('needs only a name; everything else has a default', () => {
+    const parsed = managedProfileInsertSchema.parse({ full_name: 'Amma' });
+    expect(parsed).toEqual({
+      full_name: 'Amma',
+      date_of_birth: null,
+      gender: null,
+      blood_group: null,
+      is_minor: false,
+    });
+  });
+
+  it('rejects a nameless profile, which nobody could tell apart', () => {
+    expect(managedProfileInsertSchema.safeParse({ full_name: '' }).success).toBe(false);
+  });
+
+  it('cannot set who owns or manages the profile', () => {
+    const parsed = managedProfileInsertSchema.parse({
+      full_name: 'Amma',
+      user_id: '11111111-1111-1111-1111-111111111111',
+      managed_by: '22222222-2222-2222-2222-222222222222',
+    } as never);
+    expect(parsed).not.toHaveProperty('user_id');
+    expect(parsed).not.toHaveProperty('managed_by');
+  });
+
+  it('carries the child flag through', () => {
+    expect(managedProfileInsertSchema.parse({ full_name: 'Kiran', is_minor: true }).is_minor).toBe(
+      true,
+    );
+  });
+});
+
+describe('isManagedProfile', () => {
+  it('is true only when there is a manager and no account', () => {
+    const manager = '11111111-1111-1111-1111-111111111111';
+    expect(isManagedProfile({ user_id: null, managed_by: manager })).toBe(true);
+    expect(isManagedProfile({ user_id: manager, managed_by: null })).toBe(false);
+    // The moment of handover: both are set, and it is no longer managed.
+    expect(isManagedProfile({ user_id: manager, managed_by: manager })).toBe(false);
+  });
+});
+
+describe('profileClaimInsertSchema', () => {
+  const base = {
+    profile_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    token_hash: 'a'.repeat(64),
+    code_hash: 'b'.repeat(64),
+  };
+
+  it('defaults the email to absent — it is only a label', () => {
+    expect(profileClaimInsertSchema.parse(base).invitee_email).toBeNull();
+  });
+
+  it('never carries a plaintext secret', () => {
+    const parsed = profileClaimInsertSchema.parse({ ...base, token: 'plaintext' } as never);
+    expect(parsed).not.toHaveProperty('token');
+  });
+
+  it('rejects an empty hash, which would match nothing', () => {
+    expect(profileClaimInsertSchema.safeParse({ ...base, token_hash: '' }).success).toBe(false);
+  });
+});
+
+describe('profileClaimPreviewSchema', () => {
+  const base = {
+    profile_id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    profile_name: 'Amma',
+    date_of_birth: '1955-03-12',
+    manager_name: 'Arjun',
+    record_count: 24,
+    expires_at: '2026-08-10T10:00:00+00:00',
+    already_claimed: false,
+  };
+
+  it('accepts a preview with names still unfilled', () => {
+    const result = profileClaimPreviewSchema.safeParse({
+      ...base,
+      profile_name: null,
+      date_of_birth: null,
+      manager_name: null,
+      record_count: 0,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a negative record count', () => {
+    expect(profileClaimPreviewSchema.safeParse({ ...base, record_count: -1 }).success).toBe(false);
+  });
+});
+
+describe('profileClaimSummarySchema', () => {
+  it('accepts a claim nobody has picked up yet', () => {
+    const result = profileClaimSummarySchema.safeParse({
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      profile_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      profile_name: 'Amma',
+      status: 'pending',
+      invitee_email: null,
+      claimant_name: null,
+      claimed_at: null,
+      expires_at: '2026-08-10T10:00:00+00:00',
+      created_at: '2026-08-07T10:00:00+00:00',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a status the database cannot produce', () => {
+    const result = profileClaimSummarySchema.safeParse({
+      id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+      profile_id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+      profile_name: 'Amma',
+      status: 'accepted',
+      invitee_email: null,
+      claimant_name: null,
+      claimed_at: null,
+      expires_at: '2026-08-10T10:00:00+00:00',
+      created_at: '2026-08-07T10:00:00+00:00',
+    });
+    expect(result.success).toBe(false);
   });
 });
 
@@ -367,6 +501,7 @@ describe('full-row schemas parse database rows', () => {
       blood_group: null,
       height_cm: null,
       weight_kg: null,
+      is_minor: false,
       created_at: '2026-07-08T10:15:30+00:00',
       updated_at: '2026-07-08T10:15:30+00:00',
     });

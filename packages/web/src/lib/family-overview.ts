@@ -111,7 +111,9 @@ async function loadSummary(person: CirclePerson): Promise<FamilySummary> {
 
 async function loadDateOfBirth(person: CirclePerson, owner: string): Promise<string | null> {
   if (!allowsCategory(person, 'profiles')) return null;
-  const { data } = await supabase.from('profiles').select('*').eq('profile_id', owner).maybeSingle();
+  // A profile is identified by its own primary key — `counterpart_id` already
+  // *is* the profile id, so there is no profile_id column to match on here.
+  const { data } = await supabase.from('profiles').select('*').eq('id', owner).maybeSingle();
   if (!data) return null;
   return profileSchema.parse(data).date_of_birth;
 }

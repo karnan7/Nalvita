@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppLayout } from '@/components/app-layout';
 import { RequireAuth } from '@/components/require-auth';
+import ClaimProfilePage from '@/pages/claim-profile';
 import DashboardPage from '@/pages/dashboard';
 import DocumentsPage from '@/pages/documents';
 import FamilyPage from '@/pages/family';
@@ -22,6 +23,7 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/family/join" element={<JoinInvitePage />} />
+      <Route path="/profile/claim" element={<ClaimProfilePage />} />
       <Route element={<RequireAuth />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<AppLayout />}>

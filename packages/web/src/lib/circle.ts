@@ -3,7 +3,6 @@ import {
   circleInvitePreviewSchema,
   circleInviteSummarySchema,
   circlePersonSchema,
-  INVITE_CODE_LENGTH,
   type CirclePerson,
   type CircleRole,
   type ShareCategory,
@@ -12,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
 import { useActiveProfile } from '@/lib/active-profile-context';
+import { newSecretPair } from '@/lib/secrets';
 import { supabase } from '@/lib/supabase';
 
 const peopleListSchema = z.array(circlePersonSchema);
@@ -129,31 +129,6 @@ export function toggleCategory(value: AccessSelection, category: ShareCategory):
 const PEOPLE_KEY = ['circle-people'];
 const INVITES_KEY = ['circle-invites'];
 
-/** Lower-case hex SHA-256, matching the server's `encode(digest(...),'hex')`. */
-async function sha256Hex(input: string): Promise<string> {
-  const bytes = new TextEncoder().encode(input);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-/** A high-entropy link secret (192 bits) — the real credential, hidden in the link. */
-function randomToken(): string {
-  const bytes = new Uint8Array(24);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-/** A short code for manual entry; low entropy, so the accept RPC throttles it. */
-function randomCode(): string {
-  const max = 10 ** INVITE_CODE_LENGTH;
-  const n = (crypto.getRandomValues(new Uint32Array(1))[0] ?? 0) % max;
-  return n.toString().padStart(INVITE_CODE_LENGTH, '0');
-}
-
 /** The join URL an owner shares; the secret lives in the query string. */
 export function inviteLink(token: string): string {
   return `${window.location.origin}/family/join?token=${token}`;
@@ -209,9 +184,7 @@ export function useCreateInvite(userId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: InviteFormValues): Promise<CreatedInvite> => {
-      const token = randomToken();
-      const code = randomCode();
-      const [token_hash, code_hash] = await Promise.all([sha256Hex(token), sha256Hex(code)]);
+      const { token, code, token_hash, code_hash } = await newSecretPair();
       const email = values.invitee_email.trim() || null;
 
       if (email) {

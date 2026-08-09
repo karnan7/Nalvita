@@ -3,6 +3,7 @@ export * from './tokens.js';
 export * from './utils.js';
 export * from './schemas/shared.js';
 export * from './schemas/profile.js';
+export * from './schemas/profile-claim.js';
 export * from './schemas/document.js';
 export * from './schemas/medicine.js';
 export * from './schemas/vital.js';
