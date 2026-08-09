@@ -53,10 +53,23 @@ export function makeProfileRow(overrides: Record<string, unknown> = {}) {
     blood_group: null,
     height_cm: null,
     weight_kg: null,
+    is_minor: false,
     created_at: '2026-07-01T00:00:00.000Z',
     updated_at: '2026-07-01T00:00:00.000Z',
     ...overrides,
   };
+}
+
+/** A profiles row for someone with no account of their own. */
+export function makeManagedProfileRow(overrides: Record<string, unknown> = {}) {
+  return makeProfileRow({
+    id: '00000000-0000-4000-8000-0000000000ab',
+    user_id: null,
+    managed_by: '00000000-0000-4000-8000-000000000001',
+    full_name: 'Amma',
+    date_of_birth: '1955-03-12',
+    ...overrides,
+  });
 }
 
 /**
@@ -169,6 +182,53 @@ export function makeMedicineRow(overrides: Record<string, unknown> = {}) {
 /** Makes `supabase.from('medicines')` resolve its list query to the given rows. */
 export function stubMedicinesList(rows: Record<string, unknown>[]) {
   stubListTable(rows);
+}
+
+/**
+ * `profiles` answers two different shapes of question, so its stub has to as
+ * well: one row by id or account (`.eq(…).single()`), and the list of profiles
+ * an account looks after (`.eq('managed_by',…).is('user_id',null).order(…)`).
+ *
+ * Which one is meant is settled by the terminal call, exactly as it is against
+ * PostgREST — `.single()`/`.maybeSingle()` for the row, `.is()` onwards for the
+ * list. Row lookups match on the value passed to `.eq()`, so a screen that
+ * resolves several people gets a different answer for each.
+ */
+export function profilesBuilder({
+  self,
+  managed = [],
+  others = [],
+}: {
+  /** The signed-in person's own profile row. */
+  self: Record<string, unknown>;
+  /** Profiles this account looks after; what the list query returns. */
+  managed?: Record<string, unknown>[];
+  /** Other profiles reachable by id — circle members whose details load. */
+  others?: Record<string, unknown>[];
+}) {
+  const managedRows = managed;
+  const known = [self, ...managed, ...others];
+
+  function listLink(): ListQuery {
+    const query = Promise.resolve({ data: managedRows, error: null }) as ListQuery;
+    query.order = listLink;
+    query.eq = listLink;
+    query.limit = listLink;
+    return query;
+  }
+
+  function afterEq(value: unknown) {
+    const match = known.find((row) => row.id === value || row.user_id === value) ?? null;
+    const result = { data: match, error: null };
+    return {
+      single: async () => result,
+      maybeSingle: async () => result,
+      is: listLink,
+      order: listLink,
+    };
+  }
+
+  return { select: () => ({ eq: (_column: string, value: unknown) => afterEq(value) }) };
 }
 
 /** A vitals row as PostgREST would return it (a blood pressure reading by default). */

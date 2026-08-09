@@ -1,11 +1,8 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 
-import logoFullDark from '@/assets/logo-full-dark-4x.png';
-import logoFullLight from '@/assets/logo-full-light-4x.png';
+import { CodeEntry, LinkOutcome, LinkPage } from '@/components/link-page';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/auth-context';
 import {
   CIRCLE_ROLE_DESCRIPTIONS,
@@ -15,21 +12,6 @@ import {
   useDeclineInvite,
   useInvitePreview,
 } from '@/lib/circle';
-
-function Card({ children }: Readonly<{ children: React.ReactNode }>) {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-8 p-8">
-      <h1 className="flex items-center">
-        <span className="sr-only">Nalvita</span>
-        <img src={logoFullLight} alt="" className="h-16 w-auto dark:hidden" />
-        <img src={logoFullDark} alt="" className="hidden h-16 w-auto dark:block" />
-      </h1>
-      <div className="w-full max-w-md rounded-2xl border border-border-default bg-surface p-6 shadow-sm">
-        {children}
-      </div>
-    </main>
-  );
-}
 
 /** Ask the invitee to sign in first, returning them to this same invite after. */
 function SignInPrompt() {
@@ -49,36 +31,6 @@ function SignInPrompt() {
   );
 }
 
-/** Manual 6-digit code entry, when the person doesn't have the link. */
-function CodeEntry({ onSubmit }: Readonly<{ onSubmit: (code: string) => void }>) {
-  const [code, setCode] = useState('');
-
-  function submit(event: SyntheticEvent) {
-    event.preventDefault();
-    const trimmed = code.trim();
-    if (trimmed) onSubmit(trimmed);
-  }
-
-  return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="invite-code">Enter your invite code</Label>
-        <Input
-          id="invite-code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          placeholder="6-digit code"
-          value={code}
-          onChange={(event) => setCode(event.target.value)}
-        />
-      </div>
-      <Button type="submit" disabled={!code.trim()}>
-        Continue
-      </Button>
-    </form>
-  );
-}
-
 export default function JoinInvitePage() {
   const { session, loading } = useAuth();
   const [searchParams] = useSearchParams();
@@ -91,67 +43,59 @@ export default function JoinInvitePage() {
   const decline = useDeclineInvite();
   const [outcome, setOutcome] = useState<'idle' | 'accepted' | 'declined'>('idle');
 
-  if (loading) return <Card>{null}</Card>;
-  if (!session) return <Card><SignInPrompt /></Card>;
+  if (loading) return <LinkPage>{null}</LinkPage>;
+  if (!session) {
+    return (
+      <LinkPage>
+        <SignInPrompt />
+      </LinkPage>
+    );
+  }
 
   if (!secret) {
     return (
-      <Card>
-        <CodeEntry onSubmit={setCodeSecret} />
-      </Card>
+      <LinkPage>
+        <CodeEntry label="Enter your invite code" onSubmit={setCodeSecret} />
+      </LinkPage>
     );
   }
 
   if (outcome === 'accepted') {
     return (
-      <Card>
-        <div className="flex flex-col gap-4 text-center">
-          <h2 className="font-heading text-xl font-bold text-content">You&apos;re connected</h2>
-          <p className="text-sm text-content-secondary">
-            You now have access to the records they shared. You can leave this circle anytime from
-            your Family page.
-          </p>
-          <Button asChild>
-            <Link to="/family">Go to Family</Link>
-          </Button>
-        </div>
-      </Card>
+      <LinkPage>
+        <LinkOutcome title="You&apos;re connected" to="/family" label="Go to Family">
+          You now have access to the records they shared. You can leave this circle anytime from
+          your Family page.
+        </LinkOutcome>
+      </LinkPage>
     );
   }
 
   if (outcome === 'declined') {
     return (
-      <Card>
-        <div className="flex flex-col gap-4 text-center">
-          <h2 className="font-heading text-xl font-bold text-content">Invite declined</h2>
-          <p className="text-sm text-content-secondary">
-            No problem — nothing was shared and no connection was made.
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/dashboard">Go to my records</Link>
-          </Button>
-        </div>
-      </Card>
+      <LinkPage>
+        <LinkOutcome title="Invite declined" to="/dashboard" label="Go to my records" muted>
+          No problem — nothing was shared and no connection was made.
+        </LinkOutcome>
+      </LinkPage>
     );
   }
 
   if (preview.isPending) {
-    return <Card><p className="text-center text-sm text-content-muted">Checking your invite…</p></Card>;
+    return (
+      <LinkPage>
+        <p className="text-center text-sm text-content-muted">Checking your invite…</p>
+      </LinkPage>
+    );
   }
 
   if (preview.isError || !preview.data) {
     return (
-      <Card>
-        <div className="flex flex-col gap-4 text-center">
-          <h2 className="font-heading text-xl font-bold text-content">Invite not found</h2>
-          <p className="text-sm text-content-secondary">
-            This invite is invalid or has expired. Ask your family member to send you a new one.
-          </p>
-          <Button asChild variant="outline">
-            <Link to="/dashboard">Go to my records</Link>
-          </Button>
-        </div>
-      </Card>
+      <LinkPage>
+        <LinkOutcome title="Invite not found" to="/dashboard" label="Go to my records" muted>
+          This invite is invalid or has expired. Ask your family member to send you a new one.
+        </LinkOutcome>
+      </LinkPage>
     );
   }
 
@@ -163,7 +107,7 @@ export default function JoinInvitePage() {
       : null;
 
   return (
-    <Card>
+    <LinkPage>
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
           <h2 className="font-heading text-xl font-bold text-content">
@@ -214,6 +158,6 @@ export default function JoinInvitePage() {
           </Button>
         </div>
       </div>
-    </Card>
+    </LinkPage>
   );
 }

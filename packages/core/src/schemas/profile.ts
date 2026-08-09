@@ -20,6 +20,7 @@ export const profileSchema = z.object({
   blood_group: z.enum(BLOOD_GROUPS).nullable(),
   height_cm: z.number().positive().nullable(),
   weight_kg: z.number().positive().nullable(),
+  is_minor: z.boolean(),
   created_at: isoDateTime,
   updated_at: isoDateTime,
 });
@@ -32,3 +33,26 @@ export const profileUpdateSchema = profileSchema
   .partial();
 
 export type ProfileUpdate = z.infer<typeof profileUpdateSchema>;
+
+/**
+ * Creating a profile for someone who has no account — the only kind of profile
+ * the app ever inserts, since a person's own is made for them at signup.
+ *
+ * `managed_by` is set from the session at the call site, and `user_id` stays
+ * null until they claim the profile. Only the few details a caregiver can
+ * reasonably know up front are asked for; the rest is filled in later.
+ */
+export const managedProfileInsertSchema = z.object({
+  full_name: z.string().min(1),
+  date_of_birth: isoDate.nullable().default(null),
+  gender: z.enum(GENDERS).nullable().default(null),
+  blood_group: z.enum(BLOOD_GROUPS).nullable().default(null),
+  is_minor: z.boolean().default(false),
+});
+
+export type ManagedProfileInsert = z.infer<typeof managedProfileInsertSchema>;
+
+/** True when the profile has no account of its own and someone else runs it. */
+export function isManagedProfile(profile: Pick<Profile, 'user_id' | 'managed_by'>): boolean {
+  return profile.user_id === null && profile.managed_by !== null;
+}

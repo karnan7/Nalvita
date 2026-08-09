@@ -66,6 +66,30 @@ export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[number];
 export const INVITE_STATUSES = ['pending', 'accepted', 'declined', 'expired'] as const;
 export type InviteStatus = (typeof INVITE_STATUSES)[number];
 
+/**
+ * Handover lifecycle — mirrors the `claim_status` Postgres enum. A claim is
+ * answered twice, so it has a state between the two: 'awaiting_manager' is the
+ * claimant having consented and the manager not yet having confirmed.
+ */
+export const CLAIM_STATUSES = [
+  'pending',
+  'awaiting_manager',
+  'completed',
+  'declined',
+  'expired',
+] as const;
+export type ClaimStatus = (typeof CLAIM_STATUSES)[number];
+
+/**
+ * How many profiles one account may look after — mirrors the cap in the
+ * `enforce_managed_profile_cap()` trigger. Enough for a family, small enough
+ * that creating profiles is not a way to mint free storage.
+ */
+export const MAX_MANAGED_PROFILES = 6;
+
+/** How long a handover link stays valid — mirrors `profile_claims.expires_at`. */
+export const PROFILE_CLAIM_TTL_HOURS = 72;
+
 /** Digits in the manual-entry invite code; the link carries a longer secret. */
 export const INVITE_CODE_LENGTH = 6;
 
@@ -74,8 +98,9 @@ export const INVITE_TTL_HOURS = 24;
 
 /**
  * Verbs the activity feed understands — mirrors the allow-list in the
- * `log_audit_event()` SQL function. 'joined_circle' is written by the database
- * when an invite is accepted; the rest come from the app.
+ * `log_audit_event()` SQL function. 'joined_circle' and 'handed_over_profile'
+ * are written by the database when an invite is accepted and when a managed
+ * profile is handed over; the rest come from the app.
  */
 export const AUDIT_ACTIONS = [
   'viewed',
@@ -84,6 +109,7 @@ export const AUDIT_ACTIONS = [
   'deleted',
   'sent_reminder',
   'joined_circle',
+  'handed_over_profile',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 

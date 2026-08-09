@@ -1,7 +1,7 @@
-import { Check, Copy } from 'lucide-react';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
 import { AccessFields } from '@/components/family/access-fields';
+import { CopyField } from '@/components/family/copy-field';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,31 +21,6 @@ interface InviteDialogProps {
 
 function emptyForm(): InviteFormValues {
   return { role: 'viewer', categories: ['all'], invitee_email: '' };
-}
-
-/** A read-only field with a copy button, for the generated code and link. */
-function CopyField({ label, value }: Readonly<{ label: string; value: string }>) {
-  const [copied, setCopied] = useState(false);
-
-  async function copy() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm font-medium text-content">{label}</span>
-      <div className="flex items-center gap-2">
-        <code className="flex-1 truncate rounded-lg bg-sunken px-3 py-2 text-sm text-content">
-          {value}
-        </code>
-        <Button type="button" variant="outline" size="icon" onClick={() => void copy()} aria-label={`Copy ${label}`}>
-          {copied ? <Check /> : <Copy />}
-        </Button>
-      </div>
-    </div>
-  );
 }
 
 function CreatedInviteView({
