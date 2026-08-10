@@ -4,10 +4,7 @@ import type { ReactNode } from 'react';
 
 import { StatusBadge } from '@/components/ui-nalvita';
 import { VitalStatusBadge } from '@/components/vitals/vital-status-badge';
-import { CIRCLE_ROLE_LABELS } from '@/lib/circle';
-import { activeMedicineCount, type FamilySummary } from '@/lib/family-overview';
-import { formatDocDate } from '@/lib/documents';
-import { formatVitalValue, VITAL_TYPE_LABELS } from '@/lib/vitals';
+import { CIRCLE_ROLE_LABELS, VITAL_TYPE_LABELS, activeMedicineCount, formatDocDate, formatVitalValue, type FamilySummary } from '@nalvita/data';
 
 /** Their name, plus their age when the profile category is shared. */
 function personLabel(summary: FamilySummary): string {

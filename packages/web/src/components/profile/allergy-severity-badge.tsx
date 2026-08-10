@@ -1,7 +1,7 @@
 import type { AllergySeverity } from '@nalvita/core';
 
 import { StatusBadge, type StatusVariant } from '@/components/ui-nalvita';
-import { ALLERGY_SEVERITY_LABELS } from '@/lib/allergies';
+import { ALLERGY_SEVERITY_LABELS } from '@nalvita/data';
 
 /** Health colour semantics: severe → red alert, moderate → amber, mild → green. */
 const SEVERITY_VARIANT: Record<AllergySeverity, StatusVariant> = {

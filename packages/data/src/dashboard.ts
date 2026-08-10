@@ -1,6 +1,6 @@
 import { VITAL_TYPES, type Document, type Medicine, type Vital, type VitalType } from '@nalvita/core';
 
-import { isMedicinePast, isRefillDue } from '@/lib/medicines';
+import { isMedicinePast, isRefillDue } from './medicines.js';
 
 /** Medicines currently being taken (not stopped or finished). */
 export function activeMedicines(medicines: readonly Medicine[]): Medicine[] {

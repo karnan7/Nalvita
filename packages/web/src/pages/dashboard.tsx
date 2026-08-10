@@ -4,8 +4,7 @@ import { RecentDocumentsCard } from '@/components/dashboard/recent-documents-car
 import { StatCards } from '@/components/dashboard/stat-cards';
 import { TimelineCard } from '@/components/dashboard/timeline-card';
 import { VitalsCard } from '@/components/dashboard/vitals-card';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { useProfileById } from '@/lib/profile';
+import { useActiveProfile, useProfileById } from '@nalvita/data';
 
 export default function DashboardPage() {
   const { profileId, isSelf } = useActiveProfile();

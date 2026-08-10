@@ -6,8 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { GENDER_LABELS, useUpdateProfile } from '@/lib/profile';
+import { GENDER_LABELS, useActiveProfile, useUpdateProfile } from '@nalvita/data';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();

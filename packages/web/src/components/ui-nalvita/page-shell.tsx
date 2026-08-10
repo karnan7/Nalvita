@@ -16,8 +16,7 @@ import logoFullDark from "@/assets/logo-full-dark-4x.png";
 import logoFullLight from "@/assets/logo-full-light-4x.png";
 import { ViewingAsBanner } from "@/components/family/viewing-as-banner";
 import { ThemeToggle } from "@/components/ui-nalvita/theme-toggle";
-import { useAuth } from "@/lib/auth-context";
-import { useProfile } from "@/lib/profile";
+import { useAuth, useProfile } from "@nalvita/data";
 import { cn } from "@/lib/utils";
 
 interface NavItem {

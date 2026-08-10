@@ -7,8 +7,8 @@ import {
 } from '@nalvita/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { auditRecord } from '@/lib/audit';
-import { supabase } from '@/lib/supabase';
+import { auditRecord } from './audit.js';
+import { useSupabase } from './client.js';
 
 /** User-facing names for each gender (DB values are snake_case). */
 export const GENDER_LABELS: Record<Gender, string> = {
@@ -40,6 +40,7 @@ export function formatProfileDate(date: string): string {
 
 /** The signed-in user's own profile row (auto-created at signup by a DB trigger). */
 export function useProfile(userId: string | undefined) {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: ['profile', userId],
     enabled: Boolean(userId),
@@ -57,6 +58,7 @@ export function useProfile(userId: string | undefined) {
 
 /** Any profile I'm allowed to see, by its own id — mine, or one shared with me. */
 export function useProfileById(profileId: string | undefined) {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: ['profile-by-id', profileId],
     enabled: Boolean(profileId),
@@ -73,6 +75,7 @@ export function useProfileById(profileId: string | undefined) {
 }
 
 export function useUpdateProfile(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (update: ProfileUpdate): Promise<Profile> => {
@@ -88,7 +91,7 @@ export function useUpdateProfile(profileId: string) {
     },
     onSuccess: (profile) => {
       // A profile is its own subject, so it is both the record and its owner.
-      auditRecord('updated', 'profiles', { id: profile.id, profile_id: profile.id });
+      auditRecord(supabase, 'updated', 'profiles', { id: profile.id, profile_id: profile.id });
       queryClient.setQueryData(['profile-by-id', profileId], profile);
       if (profile.user_id) queryClient.setQueryData(['profile', profile.user_id], profile);
     },

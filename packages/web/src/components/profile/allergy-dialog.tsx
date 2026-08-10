@@ -1,19 +1,13 @@
 import { ALLERGY_SEVERITIES, type Allergy, type AllergySeverity } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
-import { useActiveProfile } from '@/lib/active-profile-context';
+import { ALLERGY_SEVERITY_LABELS, useActiveProfile, useAddAllergy, useUpdateAllergy, type AllergyFormValues } from '@nalvita/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  ALLERGY_SEVERITY_LABELS,
-  useAddAllergy,
-  useUpdateAllergy,
-  type AllergyFormValues,
-} from '@/lib/allergies';
 
 interface AllergyDialogProps {
   open: boolean;

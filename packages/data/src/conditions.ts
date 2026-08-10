@@ -7,9 +7,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { supabase } from '@/lib/supabase';
+import { auditedInvalidate, deleteAuditedRecord } from './audit.js';
+import { useActiveProfile } from './active-profile-context.js';
+import { useSupabase } from './client.js';
 
 const conditionListSchema = z.array(conditionSchema);
 
@@ -40,6 +40,7 @@ export function formatConditionDate(date: string): string {
 
 /** The active profile's conditions, newest first. */
 export function useConditions() {
+  const supabase = useSupabase();
   const { profileId } = useActiveProfile();
   return useQuery({
     queryKey: ['conditions', profileId],
@@ -68,6 +69,7 @@ function toRow(values: ConditionFormValues) {
 
 /** Adds a new condition; status defaults to active. */
 export function useAddCondition(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: ConditionFormValues): Promise<Condition> => {
@@ -80,12 +82,13 @@ export function useAddCondition(profileId: string) {
       if (error) throw error;
       return conditionSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'added', 'conditions'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'added', 'conditions'),
   });
 }
 
 /** Edits an existing condition. */
 export function useUpdateCondition() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -104,15 +107,16 @@ export function useUpdateCondition() {
       if (error) throw error;
       return conditionSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'updated', 'conditions'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'updated', 'conditions'),
   });
 }
 
 /** Deletes a condition. */
 export function useDeleteCondition() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteAuditedRecord('conditions', id),
-    onSuccess: auditedInvalidate(queryClient, 'deleted', 'conditions'),
+    mutationFn: (id: string) => deleteAuditedRecord(supabase, 'conditions', id),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'deleted', 'conditions'),
   });
 }

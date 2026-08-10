@@ -7,15 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
-import {
-  formatMedDate,
-  isMedicinePast,
-  isRefillDue,
-  MEDICINE_FREQUENCY_LABELS,
-  MEDICINE_TIMING_LABELS,
-  todayIso,
-  useStopMedicine,
-} from '@/lib/medicines';
+import { MEDICINE_FREQUENCY_LABELS, MEDICINE_TIMING_LABELS, formatMedDate, isMedicinePast, isRefillDue, todayIso, useStopMedicine } from '@nalvita/data';
 
 interface MedicineCardProps {
   medicine: Medicine;

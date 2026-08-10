@@ -6,13 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
-import { useAuth } from '@/lib/auth-context';
-import {
-  isValidSelection,
-  useCreateInvite,
-  type CreatedInvite,
-  type InviteFormValues,
-} from '@/lib/circle';
+import { isValidSelection, useAuth, useCreateInvite, type CreatedInvite, type InviteFormValues } from '@nalvita/data';
 
 interface InviteDialogProps {
   open: boolean;

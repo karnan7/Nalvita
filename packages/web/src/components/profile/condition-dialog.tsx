@@ -1,19 +1,13 @@
 import { CONDITION_STATUSES, type Condition, type ConditionStatus } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
-import { useActiveProfile } from '@/lib/active-profile-context';
+import { CONDITION_STATUS_LABELS, useActiveProfile, useAddCondition, useUpdateCondition, type ConditionFormValues } from '@nalvita/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  CONDITION_STATUS_LABELS,
-  useAddCondition,
-  useUpdateCondition,
-  type ConditionFormValues,
-} from '@/lib/conditions';
 
 interface ConditionDialogProps {
   open: boolean;

@@ -7,7 +7,7 @@ import {
   managedName,
   remainingProfileSlots,
   viewingManagedProfile,
-} from '@/lib/managed-profiles';
+} from './managed-profiles.js';
 
 function profile(overrides: Partial<Profile> = {}): Profile {
   return {
@@ -87,6 +87,8 @@ describe('viewingManagedProfile', () => {
 
 describe('claimLink', () => {
   it('puts the secret in the link the person opens', () => {
-    expect(claimLink('deadbeef')).toBe(`${window.location.origin}/profile/claim?token=deadbeef`);
+    expect(claimLink('https://nalvita.app', 'deadbeef')).toBe(
+      'https://nalvita.app/profile/claim?token=deadbeef',
+    );
   });
 });

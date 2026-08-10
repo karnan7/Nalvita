@@ -5,11 +5,7 @@ import { StatusBadge, type StatusVariant } from '@/components/ui-nalvita';
 import { RecordActions } from '@/components/profile/record-actions';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import {
-  CONDITION_STATUS_LABELS,
-  formatConditionDate,
-  useDeleteCondition,
-} from '@/lib/conditions';
+import { CONDITION_STATUS_LABELS, formatConditionDate, useDeleteCondition } from '@nalvita/data';
 
 interface ConditionCardProps {
   condition: Condition;

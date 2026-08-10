@@ -2,18 +2,8 @@ import { Activity, FileText, Pill, Stethoscope, type LucideIcon } from 'lucide-r
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { useConditions } from '@/lib/conditions';
-import { useDocuments } from '@/lib/documents';
-import { useMedicines } from '@/lib/medicines';
-import {
-  buildTimelineEvents,
-  filterTimelineEvents,
-  type TimelineKind,
-  type TimelineKindFilter,
-  type TimelineRange,
-} from '@/lib/timeline';
+import { buildTimelineEvents, filterTimelineEvents, useConditions, useDocuments, useMedicines, useVitals, type TimelineKind, type TimelineKindFilter, type TimelineRange } from '@nalvita/data';
 import { cn } from '@/lib/utils';
-import { useVitals } from '@/lib/vitals';
 
 const KIND_ICONS: Record<TimelineKind, LucideIcon> = {
   document: FileText,

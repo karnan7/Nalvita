@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { RecordActions } from '@/components/profile/record-actions';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { useDeleteDoctor } from '@/lib/doctors';
+import { useDeleteDoctor } from '@nalvita/data';
 
 interface DoctorCardProps {
   doctor: Doctor;

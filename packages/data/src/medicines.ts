@@ -8,9 +8,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditedInvalidate } from '@/lib/audit';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { supabase } from '@/lib/supabase';
+import { auditedInvalidate } from './audit.js';
+import { useActiveProfile } from './active-profile-context.js';
+import { useSupabase } from './client.js';
 
 /** Show a refill reminder once the refill date is this many days away (or overdue). */
 const REFILL_WINDOW_DAYS = 3;
@@ -83,6 +83,7 @@ export function formatMedDate(date: string): string {
 
 /** The active profile's medicines, newest first. */
 export function useMedicines() {
+  const supabase = useSupabase();
   const { profileId } = useActiveProfile();
   return useQuery({
     queryKey: ['medicines', profileId],
@@ -115,6 +116,7 @@ function toRow(values: MedicineFormValues) {
 
 /** Adds a new medicine; status defaults to active. */
 export function useAddMedicine(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: MedicineFormValues): Promise<Medicine> => {
@@ -127,12 +129,13 @@ export function useAddMedicine(profileId: string) {
       if (error) throw error;
       return medicineSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'added', 'medicines'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'added', 'medicines'),
   });
 }
 
 /** Edits an existing medicine's details. */
 export function useUpdateMedicine() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -151,12 +154,13 @@ export function useUpdateMedicine() {
       if (error) throw error;
       return medicineSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'updated', 'medicines'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'updated', 'medicines'),
   });
 }
 
 /** Marks an active medicine as stopped, recording the day it ended. */
 export function useStopMedicine() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, endDate }: { id: string; endDate: string }): Promise<Medicine> => {
@@ -169,6 +173,6 @@ export function useStopMedicine() {
       if (error) throw error;
       return medicineSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'updated', 'medicines'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'updated', 'medicines'),
   });
 }

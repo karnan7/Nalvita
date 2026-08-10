@@ -2,8 +2,7 @@ import { AllergySection } from '@/components/profile/allergy-section';
 import { ConditionSection } from '@/components/profile/condition-section';
 import { DoctorSection } from '@/components/profile/doctor-section';
 import { PersonalDetailsSection } from '@/components/profile/personal-details-section';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { useProfileById } from '@/lib/profile';
+import { useActiveProfile, useProfileById } from '@nalvita/data';
 
 export default function ProfilePage() {
   const { profileId, isSelf } = useActiveProfile();

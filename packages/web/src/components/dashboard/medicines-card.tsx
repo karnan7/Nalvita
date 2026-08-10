@@ -1,6 +1,5 @@
 import { CardSkeleton, EmptyState, SectionCard, StatusBadge } from '@/components/ui-nalvita';
-import { activeMedicines } from '@/lib/dashboard';
-import { isRefillDue, MEDICINE_FREQUENCY_LABELS, useMedicines } from '@/lib/medicines';
+import { MEDICINE_FREQUENCY_LABELS, activeMedicines, isRefillDue, useMedicines } from '@nalvita/data';
 
 export function MedicinesCard() {
   const { data: medicines, isPending, isError } = useMedicines();

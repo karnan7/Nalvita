@@ -2,21 +2,13 @@ import { DOCUMENT_CATEGORIES, type DocumentCategory } from '@nalvita/core';
 import { UploadCloud } from 'lucide-react';
 import { useId, useRef, useState, type DragEvent, type SyntheticEvent } from 'react';
 
-import { useActiveProfile } from '@/lib/active-profile-context';
+import { DOCUMENT_CATEGORY_LABELS, UploadValidationError, checkUploadFile, formatFileSize, useActiveProfile, useUploadDocument, type UploadRejection } from '@nalvita/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  checkUploadFile,
-  DOCUMENT_CATEGORY_LABELS,
-  formatFileSize,
-  UploadValidationError,
-  useUploadDocument,
-  type UploadRejection,
-} from '@/lib/documents';
 
 const REJECTION_MESSAGES: Record<UploadRejection, string> = {
   'unsupported-type': 'Please choose a PDF, JPG, or PNG file.',

@@ -9,9 +9,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { supabase } from '@/lib/supabase';
+import { auditedInvalidate, deleteAuditedRecord } from './audit.js';
+import { useActiveProfile } from './active-profile-context.js';
+import { useSupabase } from './client.js';
 
 const vitalListSchema = z.array(vitalSchema);
 
@@ -104,6 +104,7 @@ function toRow(values: VitalFormValues) {
 
 /** The active profile's vitals, newest first. */
 export function useVitals() {
+  const supabase = useSupabase();
   const { profileId } = useActiveProfile();
   return useQuery({
     queryKey: ['vitals', profileId],
@@ -122,6 +123,7 @@ export function useVitals() {
 
 /** Logs a new reading. */
 export function useLogVital(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: VitalFormValues): Promise<Vital> => {
@@ -134,12 +136,13 @@ export function useLogVital(profileId: string) {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'added', 'vitals'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'added', 'vitals'),
   });
 }
 
 /** Corrects an existing reading. */
 export function useUpdateVital() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -158,15 +161,16 @@ export function useUpdateVital() {
       if (error) throw error;
       return vitalSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'updated', 'vitals'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'updated', 'vitals'),
   });
 }
 
 /** Removes a wrongly entered reading. */
 export function useDeleteVital() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteAuditedRecord('vitals', id),
-    onSuccess: auditedInvalidate(queryClient, 'deleted', 'vitals'),
+    mutationFn: (id: string) => deleteAuditedRecord(supabase, 'vitals', id),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'deleted', 'vitals'),
   });
 }

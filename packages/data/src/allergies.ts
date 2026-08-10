@@ -7,9 +7,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { supabase } from '@/lib/supabase';
+import { auditedInvalidate, deleteAuditedRecord } from './audit.js';
+import { useActiveProfile } from './active-profile-context.js';
+import { useSupabase } from './client.js';
 
 const allergyListSchema = z.array(allergySchema);
 
@@ -41,6 +41,7 @@ export interface AllergyFormValues {
 
 /** The active profile's allergies, newest first. */
 export function useAllergies() {
+  const supabase = useSupabase();
   const { profileId } = useActiveProfile();
   return useQuery({
     queryKey: ['allergies', profileId],
@@ -67,6 +68,7 @@ function toRow(values: AllergyFormValues) {
 
 /** Adds a new allergy. */
 export function useAddAllergy(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: AllergyFormValues): Promise<Allergy> => {
@@ -79,12 +81,13 @@ export function useAddAllergy(profileId: string) {
       if (error) throw error;
       return allergySchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'added', 'allergies'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'added', 'allergies'),
   });
 }
 
 /** Edits an existing allergy. */
 export function useUpdateAllergy() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -103,15 +106,16 @@ export function useUpdateAllergy() {
       if (error) throw error;
       return allergySchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'updated', 'allergies'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'updated', 'allergies'),
   });
 }
 
 /** Deletes an allergy. */
 export function useDeleteAllergy() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteAuditedRecord('allergies', id),
-    onSuccess: auditedInvalidate(queryClient, 'deleted', 'allergies'),
+    mutationFn: (id: string) => deleteAuditedRecord(supabase, 'allergies', id),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'deleted', 'allergies'),
   });
 }

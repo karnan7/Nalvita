@@ -1,7 +1,7 @@
 import { Pencil, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { useRecordPermissions } from '@/lib/circle';
+import { useRecordPermissions } from '@nalvita/data';
 
 interface RecordActionsProps {
   onEdit: () => void;

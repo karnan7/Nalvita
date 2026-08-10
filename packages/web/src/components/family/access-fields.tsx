@@ -2,15 +2,7 @@ import { CIRCLE_ROLES, type CircleRole } from '@nalvita/core';
 
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import {
-  CIRCLE_ROLE_DESCRIPTIONS,
-  CIRCLE_ROLE_LABELS,
-  SHAREABLE_CATEGORIES,
-  SHARE_CATEGORY_LABELS,
-  toggleAllCategories,
-  toggleCategory,
-  type AccessSelection,
-} from '@/lib/circle';
+import { CIRCLE_ROLE_DESCRIPTIONS, CIRCLE_ROLE_LABELS, SHAREABLE_CATEGORIES, SHARE_CATEGORY_LABELS, toggleAllCategories, toggleCategory, type AccessSelection } from '@nalvita/data';
 
 interface AccessFieldsProps {
   idPrefix: string;

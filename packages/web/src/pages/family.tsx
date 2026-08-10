@@ -8,18 +8,7 @@ import { HandoverDialog } from '@/components/family/handover-dialog';
 import { ManagedProfileDialog } from '@/components/family/managed-profile-dialog';
 import { EmptyState, SectionCard, StatusBadge } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { useAuth } from '@/lib/auth-context';
-import { useCirclePeople } from '@/lib/circle';
-import { useFamilyOverview, type FamilySummary } from '@/lib/family-overview';
-import {
-  isAtProfileCap,
-  managedName,
-  remainingProfileSlots,
-  useManagedProfiles,
-  useProfileClaims,
-  viewingManagedProfile,
-} from '@/lib/managed-profiles';
+import { isAtProfileCap, managedName, remainingProfileSlots, useActiveProfile, useAuth, useCirclePeople, useFamilyOverview, useManagedProfiles, useProfileClaims, viewingManagedProfile, type FamilySummary } from '@nalvita/data';
 
 /** Which dialog is open, and for whom. */
 type Dialog =

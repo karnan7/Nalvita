@@ -1,8 +1,8 @@
 import type { Condition, Document, Medicine, Vital } from '@nalvita/core';
 
-import { CONDITION_STATUS_LABELS } from '@/lib/conditions';
-import { DOCUMENT_CATEGORY_LABELS } from '@/lib/documents';
-import { formatVitalValue, VITAL_TYPE_LABELS, VITAL_UNITS } from '@/lib/vitals';
+import { CONDITION_STATUS_LABELS } from './conditions.js';
+import { DOCUMENT_CATEGORY_LABELS } from './documents.js';
+import { formatVitalValue, VITAL_TYPE_LABELS, VITAL_UNITS } from './vitals.js';
 
 export type TimelineKind = 'document' | 'vital' | 'medicine' | 'condition';
 

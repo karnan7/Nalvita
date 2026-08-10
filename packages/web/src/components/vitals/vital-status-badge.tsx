@@ -1,7 +1,7 @@
 import type { Vital, VitalStatus } from '@nalvita/core';
 
 import { StatusBadge, type StatusVariant } from '@/components/ui-nalvita';
-import { statusOf, VITAL_STATUS_LABELS } from '@/lib/vitals';
+import { VITAL_STATUS_LABELS, statusOf } from '@nalvita/data';
 
 /**
  * Maps a vital's clinical status to a Nalvita status colour: normal → green,

@@ -1,10 +1,7 @@
 import { Activity, FileText, HeartPulse, Pill } from 'lucide-react';
 
 import { StatCard } from '@/components/ui-nalvita';
-import { useConditions } from '@/lib/conditions';
-import { activeMedicines, lastCheckupDate, refillDueCount } from '@/lib/dashboard';
-import { formatDocDate, useDocuments } from '@/lib/documents';
-import { useMedicines } from '@/lib/medicines';
+import { activeMedicines, formatDocDate, lastCheckupDate, refillDueCount, useConditions, useDocuments, useMedicines } from '@nalvita/data';
 
 export function StatCards() {
   const documents = useDocuments();

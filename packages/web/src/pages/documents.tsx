@@ -6,9 +6,8 @@ import { DocumentCard } from '@/components/documents/document-card';
 import { DocumentViewer } from '@/components/documents/document-viewer';
 import { UploadDialog } from '@/components/documents/upload-dialog';
 import { Button } from '@/components/ui/button';
-import { useRecordPermissions } from '@/lib/circle';
+import { DOCUMENT_CATEGORY_LABELS, useDocuments, useRecordPermissions } from '@nalvita/data';
 import { Input } from '@/components/ui/input';
-import { DOCUMENT_CATEGORY_LABELS, useDocuments } from '@/lib/documents';
 import { cn } from '@/lib/utils';
 
 type CategoryFilter = DocumentCategory | 'all';

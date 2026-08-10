@@ -1,10 +1,7 @@
 import { Activity, FileText, Pill, Stethoscope, type LucideIcon } from 'lucide-react';
 
 import { CardSkeleton, EmptyState, SectionCard } from '@/components/ui-nalvita';
-import { useDocuments } from '@/lib/documents';
-import { useMedicines } from '@/lib/medicines';
-import { buildTimeline, type TimelineKind } from '@/lib/timeline';
-import { useVitals } from '@/lib/vitals';
+import { buildTimeline, useDocuments, useMedicines, useVitals, type TimelineKind } from '@nalvita/data';
 
 const KIND_ICONS: Record<TimelineKind, LucideIcon> = {
   document: FileText,

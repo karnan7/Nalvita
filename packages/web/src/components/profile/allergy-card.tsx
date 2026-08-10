@@ -5,7 +5,7 @@ import { AllergySeverityBadge } from '@/components/profile/allergy-severity-badg
 import { RecordActions } from '@/components/profile/record-actions';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { useDeleteAllergy } from '@/lib/allergies';
+import { useDeleteAllergy } from '@nalvita/data';
 
 interface AllergyCardProps {
   allergy: Allergy;

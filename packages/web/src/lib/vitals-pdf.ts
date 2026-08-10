@@ -1,14 +1,7 @@
 import { VITAL_TYPES, type Vital } from '@nalvita/core';
 import { jsPDF } from 'jspdf';
 
-import {
-  formatMeasuredAt,
-  formatVitalValue,
-  statusOf,
-  VITAL_STATUS_LABELS,
-  VITAL_TYPE_LABELS,
-  VITAL_UNITS,
-} from '@/lib/vitals';
+import { VITAL_STATUS_LABELS, VITAL_TYPE_LABELS, VITAL_UNITS, formatMeasuredAt, formatVitalValue, statusOf } from '@nalvita/data';
 
 const MARGIN = 40;
 const LINE_HEIGHT = 16;

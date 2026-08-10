@@ -2,9 +2,9 @@ import { doctorInsertSchema, doctorSchema, type Doctor } from '@nalvita/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { auditedInvalidate, deleteAuditedRecord } from '@/lib/audit';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { supabase } from '@/lib/supabase';
+import { auditedInvalidate, deleteAuditedRecord } from './audit.js';
+import { useActiveProfile } from './active-profile-context.js';
+import { useSupabase } from './client.js';
 
 const doctorListSchema = z.array(doctorSchema);
 
@@ -19,6 +19,7 @@ export interface DoctorFormValues {
 
 /** The active profile's doctors, newest first. */
 export function useDoctors() {
+  const supabase = useSupabase();
   const { profileId } = useActiveProfile();
   return useQuery({
     queryKey: ['doctors', profileId],
@@ -47,6 +48,7 @@ function toRow(values: DoctorFormValues) {
 
 /** Adds a new doctor. */
 export function useAddDoctor(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: DoctorFormValues): Promise<Doctor> => {
@@ -59,12 +61,13 @@ export function useAddDoctor(profileId: string) {
       if (error) throw error;
       return doctorSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'added', 'doctors'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'added', 'doctors'),
   });
 }
 
 /** Edits an existing doctor. */
 export function useUpdateDoctor() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -83,15 +86,16 @@ export function useUpdateDoctor() {
       if (error) throw error;
       return doctorSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'updated', 'doctors'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'updated', 'doctors'),
   });
 }
 
 /** Deletes a doctor. */
 export function useDeleteDoctor() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => deleteAuditedRecord('doctors', id),
-    onSuccess: auditedInvalidate(queryClient, 'deleted', 'doctors'),
+    mutationFn: (id: string) => deleteAuditedRecord(supabase, 'doctors', id),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'deleted', 'doctors'),
   });
 }

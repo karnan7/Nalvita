@@ -5,8 +5,7 @@ import { useMemo, useState } from 'react';
 import { MedicineCard } from '@/components/medicines/medicine-card';
 import { MedicineDialog } from '@/components/medicines/medicine-dialog';
 import { Button } from '@/components/ui/button';
-import { useRecordPermissions } from '@/lib/circle';
-import { isMedicinePast, useMedicines } from '@/lib/medicines';
+import { isMedicinePast, useMedicines, useRecordPermissions } from '@nalvita/data';
 import { cn } from '@/lib/utils';
 
 type Tab = 'active' | 'past';
