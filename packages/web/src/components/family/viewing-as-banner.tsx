@@ -2,8 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { viewingName } from '@/components/active-profile-provider';
 import { Button } from '@/components/ui/button';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { CIRCLE_ROLE_LABELS, describeCategories } from '@/lib/circle';
+import { CIRCLE_ROLE_LABELS, describeCategories, useActiveProfile } from '@nalvita/data';
 
 /**
  * Always on screen while looking at someone else's records — the one thing

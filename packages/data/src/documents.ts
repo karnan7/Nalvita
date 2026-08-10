@@ -8,11 +8,12 @@ import {
   type DocumentMimeType,
 } from '@nalvita/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { z } from 'zod';
 
-import { auditedInvalidate } from '@/lib/audit';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { supabase } from '@/lib/supabase';
+import { auditedInvalidate } from './audit.js';
+import { useActiveProfile } from './active-profile-context.js';
+import { usePlatform, useSupabase } from './client.js';
 
 const BUCKET = 'health-documents';
 /** Signed URLs live for one minute — long enough to open, short enough to stay private. */
@@ -51,8 +52,20 @@ function isSupportedType(type: string): type is DocumentMimeType {
   return (DOCUMENT_MIME_TYPES as readonly string[]).includes(type);
 }
 
+/**
+ * The parts of a picked file this package needs, named structurally rather than
+ * as the DOM's `File`. A browser `File` satisfies it as-is; on mobile the
+ * document picker returns its own shape, and Supabase Storage accepts either.
+ */
+export interface UploadCandidate {
+  /** MIME type, e.g. `application/pdf`. */
+  type: string;
+  /** Size in bytes. */
+  size: number;
+}
+
 /** Client-side gate mirroring the bucket's own limits, for a friendly error. */
-export function checkUploadFile(file: File): UploadRejection | null {
+export function checkUploadFile(file: UploadCandidate): UploadRejection | null {
   if (!isSupportedType(file.type)) return 'unsupported-type';
   if (file.size === 0) return 'empty';
   if (file.size > MAX_DOCUMENT_SIZE_BYTES) return 'too-large';
@@ -80,6 +93,7 @@ export function isPdf(document: Pick<Document, 'file_type'>): boolean {
 
 /** The active profile's documents, newest first. */
 export function useDocuments() {
+  const supabase = useSupabase();
   const { profileId } = useActiveProfile();
   return useQuery({
     queryKey: ['documents', profileId],
@@ -98,6 +112,7 @@ export function useDocuments() {
 
 /** Uploads the file to the private bucket, then records its metadata row. */
 export function useUploadDocument(profileId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -138,12 +153,13 @@ export function useUploadDocument(profileId: string) {
       }
       return documentSchema.parse(data);
     },
-    onSuccess: auditedInvalidate(queryClient, 'added', 'documents'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'added', 'documents'),
   });
 }
 
 /** Deletes the metadata row and its underlying file. */
 export function useDeleteDocument() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (document: Document): Promise<Document> => {
@@ -153,12 +169,13 @@ export function useDeleteDocument() {
       await supabase.storage.from(BUCKET).remove([document.file_path]);
       return document;
     },
-    onSuccess: auditedInvalidate(queryClient, 'deleted', 'documents'),
+    onSuccess: auditedInvalidate(supabase, queryClient, 'deleted', 'documents'),
   });
 }
 
 /** A short-lived signed URL for viewing a document inside the app. */
 export function useSignedUrl(filePath: string, enabled = true) {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: ['document-url', filePath],
     enabled,
@@ -175,14 +192,28 @@ export function useSignedUrl(filePath: string, enabled = true) {
   });
 }
 
-/** Triggers a browser download via a one-off signed URL that forces attachment. */
-export async function downloadDocument(document: Document): Promise<void> {
-  const fileName = `${document.title}.${EXTENSION_BY_MIME[document.file_type as DocumentMimeType]}`;
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(document.file_path, SIGNED_URL_TTL_SECONDS, { download: fileName });
-  if (error) throw error;
-  window.open(data.signedUrl, '_blank', 'noopener,noreferrer');
+/**
+ * Saves a document via a one-off signed URL that forces an attachment download.
+ *
+ * A hook rather than a plain function because it needs two things from the
+ * platform: the client, and whatever "open this URL" means here — a new tab in
+ * the browser, the system viewer on a phone. The URL is minted per call and
+ * expires in a minute, so it is opened immediately and never stored.
+ */
+export function useDownloadDocument(): (document: Document) => Promise<void> {
+  const { client: supabase, openUrl } = usePlatform();
+  return useCallback(
+    async (document: Document) => {
+      const extension = EXTENSION_BY_MIME[document.file_type as DocumentMimeType];
+      const fileName = `${document.title}.${extension}`;
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(document.file_path, SIGNED_URL_TTL_SECONDS, { download: fileName });
+      if (error) throw error;
+      openUrl(data.signedUrl);
+    },
+    [supabase, openUrl],
+  );
 }
 
 /** Human-readable file size, e.g. "2.4 MB". */

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { DoctorCard } from '@/components/profile/doctor-card';
 import { DoctorDialog } from '@/components/profile/doctor-dialog';
 import { ProfileSection } from '@/components/profile/profile-section';
-import { useDoctors } from '@/lib/doctors';
+import { useDoctors } from '@nalvita/data';
 
 export function DoctorSection() {
   const { data: doctors, isPending, isError } = useDoctors();

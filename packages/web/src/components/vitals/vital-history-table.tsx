@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { VitalStatusBadge } from '@/components/vitals/vital-status-badge';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { formatMeasuredAt, formatVitalValue, useDeleteVital, VITAL_UNITS } from '@/lib/vitals';
+import { VITAL_UNITS, formatMeasuredAt, formatVitalValue, useDeleteVital } from '@nalvita/data';
 
 interface VitalHistoryTableProps {
   readings: Vital[];

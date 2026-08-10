@@ -6,15 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
-import {
-  managedName,
-  useCancelHandover,
-  useConfirmHandover,
-  useProfileClaims,
-  useRejectHandover,
-  useStartHandover,
-  type CreatedClaim,
-} from '@/lib/managed-profiles';
+import { managedName, useCancelHandover, useConfirmHandover, useProfileClaims, useRejectHandover, useStartHandover, type CreatedClaim } from '@nalvita/data';
 
 interface HandoverDialogProps {
   open: boolean;

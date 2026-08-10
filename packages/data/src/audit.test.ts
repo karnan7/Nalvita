@@ -12,7 +12,9 @@ import {
   groupByDay,
   logAuditEvent,
 } from './audit';
-import { supabase } from '@/lib/supabase';
+import { makeSupabaseStub } from './test/supabase-stub';
+
+const supabase = makeSupabaseStub();
 
 const OWNER = '00000000-0000-4000-8000-000000000001';
 const ACTOR = '00000000-0000-4000-8000-000000000002';
@@ -109,7 +111,7 @@ describe('logAuditEvent', () => {
   });
 
   it('sends the event through the RPC, never a direct table write', async () => {
-    await logAuditEvent({
+    await logAuditEvent(supabase, {
       owner_id: OWNER,
       action: 'viewed',
       resource_type: 'documents',
@@ -126,7 +128,7 @@ describe('logAuditEvent', () => {
   });
 
   it('drops an event the shared vocabulary does not allow', async () => {
-    await logAuditEvent({
+    await logAuditEvent(supabase, {
       owner_id: OWNER,
       // Deliberately outside the vocabulary — this is the guard being tested.
       action: 'tampered' as never,
@@ -140,12 +142,12 @@ describe('logAuditEvent', () => {
     vi.mocked(supabase.rpc).mockRejectedValue(new Error('offline') as never);
 
     await expect(
-      logAuditEvent({ owner_id: OWNER, action: 'added', resource_type: 'vitals' }),
+      logAuditEvent(supabase, { owner_id: OWNER, action: 'added', resource_type: 'vitals' }),
     ).resolves.toBeUndefined();
   });
 
   it('logs a record against its owner, not the person acting', () => {
-    auditRecord('updated', 'medicines', { id: RECORD, profile_id: OWNER });
+    auditRecord(supabase, 'updated', 'medicines', { id: RECORD, profile_id: OWNER });
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'log_audit_event',
@@ -165,7 +167,7 @@ describe('deleteAuditedRecord', () => {
       delete: () => ({ eq: () => ({ select: () => ({ single }) }) }),
     } as never);
 
-    await expect(deleteAuditedRecord('vitals', RECORD)).resolves.toEqual({
+    await expect(deleteAuditedRecord(supabase, 'vitals', RECORD)).resolves.toEqual({
       id: RECORD,
       profile_id: OWNER,
     });
@@ -178,7 +180,7 @@ describe('deleteAuditedRecord', () => {
       delete: () => ({ eq: () => ({ select: () => ({ single }) }) }),
     } as never);
 
-    await expect(deleteAuditedRecord('vitals', RECORD)).rejects.toMatchObject({ code: '42501' });
+    await expect(deleteAuditedRecord(supabase, 'vitals', RECORD)).rejects.toMatchObject({ code: '42501' });
   });
 });
 
@@ -192,7 +194,7 @@ describe('auditedInvalidate', () => {
     const queryClient = new QueryClient();
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue();
 
-    await auditedInvalidate(queryClient, 'deleted', 'allergies')({ id: RECORD, profile_id: OWNER });
+    await auditedInvalidate(supabase, queryClient, 'deleted', 'allergies')({ id: RECORD, profile_id: OWNER });
 
     expect(supabase.rpc).toHaveBeenCalledWith(
       'log_audit_event',

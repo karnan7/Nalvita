@@ -19,7 +19,7 @@ import { LandingNav } from "@/components/landing/landing-nav";
 import { RecordPreview } from "@/components/landing/record-preview";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@nalvita/data";
 
 interface FeatureCard {
   icon: LucideIcon;

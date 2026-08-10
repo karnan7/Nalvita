@@ -6,7 +6,7 @@ import logoFullLight from '@/assets/logo-full-light-4x.png';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@nalvita/data';
 import { supabase } from '@/lib/supabase';
 
 function friendlyAuthError(status: number | undefined, fallback: string) {

@@ -6,10 +6,9 @@ import { VitalChart } from '@/components/vitals/vital-chart';
 import { VitalHistoryTable } from '@/components/vitals/vital-history-table';
 import { VitalLogDialog } from '@/components/vitals/vital-log-dialog';
 import { Button } from '@/components/ui/button';
-import { useRecordPermissions } from '@/lib/circle';
+import { VITAL_TYPE_LABELS, useRecordPermissions, useVitals } from '@nalvita/data';
 import { cn } from '@/lib/utils';
 import { exportVitalsPdf } from '@/lib/vitals-pdf';
-import { useVitals, VITAL_TYPE_LABELS } from '@/lib/vitals';
 
 const RANGES = [30, 90] as const;
 

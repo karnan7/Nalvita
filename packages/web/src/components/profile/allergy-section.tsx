@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { AllergyCard } from '@/components/profile/allergy-card';
 import { AllergyDialog } from '@/components/profile/allergy-dialog';
 import { ProfileSection } from '@/components/profile/profile-section';
-import { sortBySeverity, useAllergies } from '@/lib/allergies';
+import { sortBySeverity, useAllergies } from '@nalvita/data';
 
 export function AllergySection() {
   const { data: allergies, isPending, isError } = useAllergies();

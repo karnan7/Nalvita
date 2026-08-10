@@ -11,7 +11,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { VITAL_TYPE_LABELS, VITAL_UNITS, vitalsInWindow } from '@/lib/vitals';
+import { VITAL_TYPE_LABELS, VITAL_UNITS, vitalsInWindow } from '@nalvita/data';
 
 interface VitalChartProps {
   vitals: Vital[];

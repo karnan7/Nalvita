@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ConditionCard } from '@/components/profile/condition-card';
 import { ConditionDialog } from '@/components/profile/condition-dialog';
 import { ProfileSection } from '@/components/profile/profile-section';
-import { useConditions } from '@/lib/conditions';
+import { useConditions } from '@nalvita/data';
 
 export function ConditionSection() {
   const { data: conditions, isPending, isError } = useConditions();

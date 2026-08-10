@@ -12,8 +12,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { newSecretPair } from '@/lib/secrets';
-import { supabase } from '@/lib/supabase';
+import { newSecretPair } from './secrets.js';
+import { usePlatform, useSupabase } from './client.js';
 
 const profileListSchema = z.array(profileSchema);
 const claimListSchema = z.array(profileClaimSummarySchema);
@@ -21,9 +21,13 @@ const claimListSchema = z.array(profileClaimSummarySchema);
 export const MANAGED_KEY = ['managed-profiles'];
 export const CLAIMS_KEY = ['profile-claims'];
 
-/** The URL the person claiming their profile opens. */
-export function claimLink(token: string): string {
-  return `${window.location.origin}/profile/claim?token=${token}`;
+/**
+ * The URL the person claiming their profile opens. Takes the origin rather than
+ * reading `window`, for the same reason as `inviteLink`: the person claiming a
+ * profile is signing up for the first time and will open this in a browser.
+ */
+export function claimLink(appBaseUrl: string, token: string): string {
+  return `${appBaseUrl}/profile/claim?token=${token}`;
 }
 
 /** How a managed profile is referred to before anyone has named it. */
@@ -68,6 +72,7 @@ export function viewingManagedProfile(profile: Profile): CirclePerson {
 
 /** Everyone I look after who has no account of their own. */
 export function useManagedProfiles(userId: string | undefined) {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: [...MANAGED_KEY, userId],
     enabled: Boolean(userId),
@@ -90,6 +95,7 @@ export function useManagedProfiles(userId: string | undefined) {
  * limit holds even if two tabs create a profile at once.
  */
 export function useCreateManagedProfile(userId: string) {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: ManagedProfileInsert): Promise<Profile> => {
@@ -108,6 +114,7 @@ export function useCreateManagedProfile(userId: string) {
 
 /** Edits the details of a profile I look after. */
 export function useUpdateManagedProfile() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
@@ -133,6 +140,7 @@ export function useUpdateManagedProfile() {
 
 /** Handovers I have started and not yet finished. */
 export function useProfileClaims() {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: CLAIMS_KEY,
     queryFn: async () => {
@@ -159,6 +167,7 @@ export interface CreatedClaim {
  * can be live per profile, so an earlier unfinished one is cleared first.
  */
 export function useStartHandover() {
+  const { client: supabase, appBaseUrl } = usePlatform();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: StartHandoverValues): Promise<CreatedClaim> => {
@@ -176,7 +185,7 @@ export function useStartHandover() {
       const { error } = await supabase.from('profile_claims').insert(insert).select('id').single();
       if (error) throw error;
 
-      return { code, link: claimLink(token) };
+      return { code, link: claimLink(appBaseUrl, token) };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: CLAIMS_KEY }),
   });
@@ -184,6 +193,7 @@ export function useStartHandover() {
 
 /** Withdraws a handover nobody has claimed yet. */
 export function useCancelHandover() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (claimId: string): Promise<void> => {
@@ -199,6 +209,7 @@ export function useCancelHandover() {
  * account that claimed it and leaves the manager with caregiver access.
  */
 export function useConfirmHandover() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (claimId: string): Promise<void> => {
@@ -217,6 +228,7 @@ export function useConfirmHandover() {
 
 /** The manager's other answer: not this person. The profile stays with them. */
 export function useRejectHandover() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (claimId: string): Promise<void> => {
@@ -229,6 +241,7 @@ export function useRejectHandover() {
 
 /** What the person holding a claim link is being offered. */
 export function useClaimPreview(secret: string | null) {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: ['claim-preview', secret],
     enabled: Boolean(secret),
@@ -245,6 +258,7 @@ export function useClaimPreview(secret: string | null) {
 
 /** The claimant's consent. Nothing moves until the manager confirms as well. */
 export function useAcceptClaim() {
+  const supabase = useSupabase();
   return useMutation({
     mutationFn: async (secret: string): Promise<void> => {
       const { error } = await supabase.rpc('accept_profile_claim', { p_secret: secret });
@@ -255,6 +269,7 @@ export function useAcceptClaim() {
 
 /** The claimant says no; the profile stays exactly as it was. */
 export function useDeclineClaim() {
+  const supabase = useSupabase();
   return useMutation({
     mutationFn: async (secret: string): Promise<void> => {
       const { error } = await supabase.rpc('decline_profile_claim', { p_secret: secret });

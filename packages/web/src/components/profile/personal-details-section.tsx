@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { PersonalDetailsDialog } from '@/components/profile/personal-details-dialog';
 import { Button } from '@/components/ui/button';
-import { computeAge, formatProfileDate, GENDER_LABELS } from '@/lib/profile';
+import { GENDER_LABELS, computeAge, formatProfileDate } from '@nalvita/data';
 
 function Field({ label, value }: Readonly<{ label: string; value: string }>) {
   return (

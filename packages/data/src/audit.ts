@@ -7,10 +7,11 @@ import {
   type ShareCategory,
   type VitalType,
 } from '@nalvita/core';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { useInfiniteQuery, type QueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { supabase } from '@/lib/supabase';
+import { useSupabase } from './client.js';
 
 const feedPageSchema = z.array(auditFeedEntrySchema);
 
@@ -30,8 +31,14 @@ export const ACTIVITY_KEY = ['activity-feed'];
  * record of what *other people* did. Failures are swallowed — an audit write
  * must never break the action the person was actually trying to do, and the
  * error carries no detail worth surfacing to them.
+ *
+ * Takes the client explicitly because this runs from mutation callbacks, not
+ * from a hook body — there is no React context to read at that point.
  */
-export async function logAuditEvent(event: AuditEvent): Promise<void> {
+export async function logAuditEvent(
+  supabase: SupabaseClient,
+  event: AuditEvent,
+): Promise<void> {
   const parsed = auditEventSchema.safeParse(event);
   if (!parsed.success) return;
 
@@ -66,11 +73,12 @@ export type AuditableRow = z.infer<typeof auditableRowSchema>;
  * to await — the entry lands a moment after the action itself.
  */
 export function auditRecord(
+  supabase: SupabaseClient,
   action: LoggableAuditAction,
   resourceType: AuditResourceType,
   row: AuditableRow,
 ): void {
-  void logAuditEvent({
+  void logAuditEvent(supabase, {
     owner_id: row.profile_id,
     action,
     resource_type: resourceType,
@@ -84,6 +92,7 @@ export function auditRecord(
  * would otherwise have no owner to attribute it to.
  */
 export async function deleteAuditedRecord(
+  supabase: SupabaseClient,
   table: AuditResourceType,
   id: string,
 ): Promise<AuditableRow> {
@@ -102,12 +111,13 @@ export async function deleteAuditedRecord(
  * refresh that table's list. Query keys are the table name throughout.
  */
 export function auditedInvalidate<T extends AuditableRow>(
+  supabase: SupabaseClient,
   queryClient: QueryClient,
   action: LoggableAuditAction,
   table: AuditResourceType,
 ): (row: T) => Promise<void> {
   return (row) => {
-    auditRecord(action, table, row);
+    auditRecord(supabase, action, table, row);
     return queryClient.invalidateQueries({ queryKey: [table] });
   };
 }
@@ -119,6 +129,7 @@ interface FeedCursor {
 
 /** The owner's activity feed: what other people did, newest first, paginated. */
 export function useActivityFeed() {
+  const supabase = useSupabase();
   return useInfiniteQuery({
     queryKey: ACTIVITY_KEY,
     initialPageParam: null as FeedCursor | null,

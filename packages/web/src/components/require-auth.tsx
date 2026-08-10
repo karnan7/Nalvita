@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 
-import { useAuth } from "@/lib/auth-context";
+import { useAuth } from "@nalvita/data";
 
 export function FullScreenMessage({
   children,

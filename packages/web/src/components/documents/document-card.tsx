@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
 import {
   DOCUMENT_CATEGORY_LABELS,
-  downloadDocument,
   formatDocDate,
   formatFileSize,
   useDeleteDocument,
-} from '@/lib/documents';
+  useDownloadDocument,
+} from '@nalvita/data';
 
 interface DocumentCardProps {
   doc: Document;
@@ -22,6 +22,7 @@ interface DocumentCardProps {
 export function DocumentCard({ doc, onView, canDelete = true }: Readonly<DocumentCardProps>) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const deleteDocument = useDeleteDocument();
+  const downloadDocument = useDownloadDocument();
 
   function confirmDelete() {
     deleteDocument.mutate(doc, { onSuccess: () => setConfirmingDelete(false) });

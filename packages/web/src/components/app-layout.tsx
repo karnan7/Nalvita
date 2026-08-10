@@ -2,8 +2,7 @@ import { Navigate, Outlet } from 'react-router-dom';
 
 import { FullScreenMessage } from '@/components/require-auth';
 import { PageShell } from '@/components/ui-nalvita';
-import { useAuth } from '@/lib/auth-context';
-import { isProfileComplete, useProfile } from '@/lib/profile';
+import { isProfileComplete, useAuth, useProfile } from '@nalvita/data';
 
 /**
  * Shell for signed-in pages. Sends people who haven't filled in their

@@ -2,7 +2,7 @@ import { Plus } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { useRecordPermissions } from '@/lib/circle';
+import { useRecordPermissions } from '@nalvita/data';
 
 interface ProfileSectionProps {
   title: string;

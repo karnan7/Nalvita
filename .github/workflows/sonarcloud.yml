@@ -26,14 +26,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # @nalvita/core must be built before @nalvita/web tests can resolve it.
+      # core, then data, must be built before @nalvita/web tests can resolve them.
       - name: Build packages
         run: npm run build
 
-      # Generate lcov for both packages. Core has coverage enabled in its config;
-      # web needs the flag. Report paths are declared in sonar-project.properties.
+      # Generate lcov for each package. Core has coverage enabled in its config;
+      # data and web need the flag. Paths are declared in sonar-project.properties.
       - name: Test with coverage (core)
         run: npm run test -w @nalvita/core
+
+      - name: Test with coverage (data)
+        run: npm run test -w @nalvita/data -- --coverage
 
       - name: Test with coverage (web)
         run: npm run test -w @nalvita/web -- --coverage

@@ -10,9 +10,9 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { newSecretPair } from '@/lib/secrets';
-import { supabase } from '@/lib/supabase';
+import { useActiveProfile } from './active-profile-context.js';
+import { newSecretPair } from './secrets.js';
+import { usePlatform, useSupabase } from './client.js';
 
 const peopleListSchema = z.array(circlePersonSchema);
 const inviteListSchema = z.array(circleInviteSummarySchema);
@@ -129,9 +129,15 @@ export function toggleCategory(value: AccessSelection, category: ShareCategory):
 const PEOPLE_KEY = ['circle-people'];
 const INVITES_KEY = ['circle-invites'];
 
-/** The join URL an owner shares; the secret lives in the query string. */
-export function inviteLink(token: string): string {
-  return `${window.location.origin}/family/join?token=${token}`;
+/**
+ * The join URL an owner shares; the secret lives in the query string.
+ *
+ * The origin is passed in rather than read from `window`: this has to build a
+ * link to the *web* app even when it runs on a phone, since whoever receives it
+ * may not have the app installed.
+ */
+export function inviteLink(appBaseUrl: string, token: string): string {
+  return `${appBaseUrl}/family/join?token=${token}`;
 }
 
 export interface InviteFormValues {
@@ -147,6 +153,7 @@ export interface CreatedInvite {
 
 /** Everyone connected to me, in both directions, with their display name. */
 export function useCirclePeople() {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: PEOPLE_KEY,
     queryFn: async () => {
@@ -159,6 +166,7 @@ export function useCirclePeople() {
 
 /** The owner's still-open invites (never exposes the secret hashes). */
 export function usePendingInvites() {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: INVITES_KEY,
     queryFn: async () => {
@@ -181,6 +189,7 @@ export function usePendingInvites() {
  * same email replaces the earlier pending invite instead of stacking.
  */
 export function useCreateInvite(userId: string) {
+  const { client: supabase, appBaseUrl } = usePlatform();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (values: InviteFormValues): Promise<CreatedInvite> => {
@@ -211,7 +220,7 @@ export function useCreateInvite(userId: string) {
         .single();
       if (error) throw error;
 
-      return { code, link: inviteLink(token) };
+      return { code, link: inviteLink(appBaseUrl, token) };
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: INVITES_KEY }),
   });
@@ -219,6 +228,7 @@ export function useCreateInvite(userId: string) {
 
 /** Cancels a pending invite the owner no longer wants outstanding. */
 export function useCancelInvite() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (inviteId: string): Promise<void> => {
@@ -241,6 +251,7 @@ export interface MembershipChange {
  * no re-consent and no session refresh.
  */
 export function useUpdateMembership() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ membershipId, role, categories }: MembershipChange): Promise<void> => {
@@ -256,6 +267,7 @@ export function useUpdateMembership() {
 
 /** Ends a member's access immediately (membership → revoked, kept as history). */
 export function useRevokeMembership() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (membershipId: string): Promise<void> => {
@@ -271,6 +283,7 @@ export function useRevokeMembership() {
 
 /** Reads the consent details for a secret (link token or typed code). */
 export function useInvitePreview(secret: string | null) {
+  const supabase = useSupabase();
   return useQuery({
     queryKey: ['invite-preview', secret],
     enabled: Boolean(secret),
@@ -287,6 +300,7 @@ export function useInvitePreview(secret: string | null) {
 
 /** Accepts an invite, creating an active membership for the current user. */
 export function useAcceptInvite() {
+  const supabase = useSupabase();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (secret: string): Promise<void> => {
@@ -299,6 +313,7 @@ export function useAcceptInvite() {
 
 /** Declines an invite; nothing is added to the circle. */
 export function useDeclineInvite() {
+  const supabase = useSupabase();
   return useMutation({
     mutationFn: async (secret: string): Promise<void> => {
       const { error } = await supabase.rpc('decline_circle_invite', { p_secret: secret });

@@ -8,14 +8,7 @@ import { ManageAccessDialog } from '@/components/family/manage-access-dialog';
 import { EmptyState, SectionCard, StatusBadge } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import {
-  CIRCLE_ROLE_LABELS,
-  describeCategories,
-  useCancelInvite,
-  useCirclePeople,
-  usePendingInvites,
-  useRevokeMembership,
-} from '@/lib/circle';
+import { CIRCLE_ROLE_LABELS, describeCategories, useCancelInvite, useCirclePeople, usePendingInvites, useRevokeMembership } from '@nalvita/data';
 
 function displayName(name: string | null): string {
   return name?.trim() || 'Family member';

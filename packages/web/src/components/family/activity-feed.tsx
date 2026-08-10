@@ -2,13 +2,7 @@ import { History } from 'lucide-react';
 
 import { EmptyState, SectionCard } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
-import {
-  describeAuditEntry,
-  formatActivityTime,
-  groupByDay,
-  useActivityFeed,
-  type ActivityDay,
-} from '@/lib/audit';
+import { describeAuditEntry, formatActivityTime, groupByDay, useActivityFeed, type ActivityDay } from '@nalvita/data';
 
 function DayGroup({ group }: Readonly<{ group: ActivityDay }>) {
   return (

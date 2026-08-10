@@ -7,21 +7,13 @@ import {
 } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
-import { useActiveProfile } from '@/lib/active-profile-context';
+import { MEDICINE_FREQUENCY_LABELS, MEDICINE_TIMING_LABELS, todayIso, useActiveProfile, useAddMedicine, useUpdateMedicine, type MedicineFormValues } from '@nalvita/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  MEDICINE_FREQUENCY_LABELS,
-  MEDICINE_TIMING_LABELS,
-  todayIso,
-  useAddMedicine,
-  useUpdateMedicine,
-  type MedicineFormValues,
-} from '@/lib/medicines';
 
 interface MedicineDialogProps {
   open: boolean;

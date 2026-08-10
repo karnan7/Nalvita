@@ -1,11 +1,12 @@
-import type { Session } from "@supabase/supabase-js";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { Session } from '@supabase/supabase-js';
 
-import { AuthContext } from "@/lib/auth-context";
-import { supabase } from "@/lib/supabase";
+import { AuthContext } from './auth-context.js';
+import { useSupabase } from './client.js';
 
 /** Tracks the Supabase session and exposes it via AuthContext. */
 export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const supabase = useSupabase();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +24,7 @@ export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const value = useMemo(() => ({ session, loading }), [session, loading]);
 

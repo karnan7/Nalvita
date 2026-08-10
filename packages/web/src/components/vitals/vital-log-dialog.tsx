@@ -1,22 +1,13 @@
 import { VITAL_TYPES, type Vital, type VitalType } from '@nalvita/core';
 import { useEffect, useState, type SyntheticEvent } from 'react';
 
-import { useActiveProfile } from '@/lib/active-profile-context';
+import { VITAL_TYPE_LABELS, VITAL_UNITS, localFromMeasuredAt, measuredAtFromLocal, useActiveProfile, useLogVital, useUpdateVital, type VitalFormValues } from '@nalvita/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
 import { Select } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  localFromMeasuredAt,
-  measuredAtFromLocal,
-  useLogVital,
-  useUpdateVital,
-  VITAL_TYPE_LABELS,
-  VITAL_UNITS,
-  type VitalFormValues,
-} from '@/lib/vitals';
 
 interface VitalLogDialogProps {
   open: boolean;

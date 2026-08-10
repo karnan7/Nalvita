@@ -4,7 +4,7 @@ import { useEffect, useState, type SyntheticEvent } from 'react';
 import { AccessFields } from '@/components/family/access-fields';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { isValidSelection, useUpdateMembership, type AccessSelection } from '@/lib/circle';
+import { isValidSelection, useUpdateMembership, type AccessSelection } from '@nalvita/data';
 
 interface ManageAccessDialogProps {
   person: CirclePerson | null;

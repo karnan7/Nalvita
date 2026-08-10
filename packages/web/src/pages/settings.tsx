@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { ThemeSelect } from '@/components/ui-nalvita';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@nalvita/data';
 import { supabase } from '@/lib/supabase';
 
 export default function SettingsPage() {

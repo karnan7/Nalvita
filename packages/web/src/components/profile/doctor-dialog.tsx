@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
-import { useActiveProfile } from '@/lib/active-profile-context';
-import { useAddDoctor, useUpdateDoctor, type DoctorFormValues } from '@/lib/doctors';
+import { useActiveProfile, useAddDoctor, useUpdateDoctor, type DoctorFormValues } from '@nalvita/data';
 
 interface DoctorDialogProps {
   open: boolean;

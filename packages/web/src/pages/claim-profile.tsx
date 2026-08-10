@@ -3,9 +3,7 @@ import { useLocation, useSearchParams, Link } from 'react-router-dom';
 
 import { CodeEntry, LinkOutcome, LinkPage } from '@/components/link-page';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth-context';
-import { useAcceptClaim, useClaimPreview, useDeclineClaim } from '@/lib/managed-profiles';
-import { computeAge } from '@/lib/profile';
+import { computeAge, useAcceptClaim, useAuth, useClaimPreview, useDeclineClaim } from '@nalvita/data';
 
 /** Ask them to sign in first, returning here afterwards. */
 function SignInPrompt() {

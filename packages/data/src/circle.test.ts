@@ -5,7 +5,7 @@ import {
   describeCategories,
   inviteLink,
   SHARE_CATEGORY_LABELS,
-} from '@/lib/circle';
+} from './circle.js';
 
 describe('describeCategories', () => {
   it('collapses the wildcard to a plain phrase', () => {
@@ -38,6 +38,8 @@ describe('label maps and link', () => {
   });
 
   it('builds an absolute join link carrying the token', () => {
-    expect(inviteLink('tok123')).toBe(`${window.location.origin}/family/join?token=tok123`);
+    expect(inviteLink('https://nalvita.app', 'tok123')).toBe(
+      'https://nalvita.app/family/join?token=tok123',
+    );
   });
 });

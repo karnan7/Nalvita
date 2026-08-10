@@ -8,12 +8,13 @@ import {
   type Medicine,
   type Vital,
 } from '@nalvita/core';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { useQueries } from '@tanstack/react-query';
 import { z } from 'zod';
 
-import { activeMedicines, lastCheckupDate, refillDueCount } from '@/lib/dashboard';
-import { allowsCategory } from '@/lib/circle';
-import { supabase } from '@/lib/supabase';
+import { activeMedicines, lastCheckupDate, refillDueCount } from './dashboard.js';
+import { allowsCategory } from './circle.js';
+import { useSupabase } from './client.js';
 
 /** A reading older than this means nobody has checked in on them lately. */
 export const STALE_VITALS_DAYS = 7;
@@ -89,14 +90,17 @@ export function sortByAttention(summaries: readonly FamilySummary[]): FamilySumm
 }
 
 /** Reads everything one card needs, skipping categories that aren't shared. */
-async function loadSummary(person: CirclePerson): Promise<FamilySummary> {
+async function loadSummary(
+  supabase: SupabaseClient,
+  person: CirclePerson,
+): Promise<FamilySummary> {
   const owner = person.counterpart_id;
 
   const [dateOfBirth, medicines, latestVital, lastCheckup] = await Promise.all([
-    loadDateOfBirth(person, owner),
-    loadMedicines(person, owner),
-    loadLatestVital(person, owner),
-    loadLastCheckup(person, owner),
+    loadDateOfBirth(supabase, person, owner),
+    loadMedicines(supabase, person, owner),
+    loadLatestVital(supabase, person, owner),
+    loadLastCheckup(supabase, person, owner),
   ]);
 
   return {
@@ -109,7 +113,11 @@ async function loadSummary(person: CirclePerson): Promise<FamilySummary> {
   };
 }
 
-async function loadDateOfBirth(person: CirclePerson, owner: string): Promise<string | null> {
+async function loadDateOfBirth(
+  supabase: SupabaseClient,
+  person: CirclePerson,
+  owner: string,
+): Promise<string | null> {
   if (!allowsCategory(person, 'profiles')) return null;
   // A profile is identified by its own primary key — `counterpart_id` already
   // *is* the profile id, so there is no profile_id column to match on here.
@@ -118,14 +126,22 @@ async function loadDateOfBirth(person: CirclePerson, owner: string): Promise<str
   return profileSchema.parse(data).date_of_birth;
 }
 
-async function loadMedicines(person: CirclePerson, owner: string): Promise<Medicine[] | null> {
+async function loadMedicines(
+  supabase: SupabaseClient,
+  person: CirclePerson,
+  owner: string,
+): Promise<Medicine[] | null> {
   if (!allowsCategory(person, 'medicines')) return null;
   const { data, error } = await supabase.from('medicines').select('*').eq('profile_id', owner);
   if (error) throw error;
   return medicineListSchema.parse(data);
 }
 
-async function loadLatestVital(person: CirclePerson, owner: string): Promise<Vital | null> {
+async function loadLatestVital(
+  supabase: SupabaseClient,
+  person: CirclePerson,
+  owner: string,
+): Promise<Vital | null> {
   if (!allowsCategory(person, 'vitals')) return null;
   const { data, error } = await supabase
     .from('vitals')
@@ -137,7 +153,11 @@ async function loadLatestVital(person: CirclePerson, owner: string): Promise<Vit
   return vitalListSchema.parse(data)[0] ?? null;
 }
 
-async function loadLastCheckup(person: CirclePerson, owner: string): Promise<string | null> {
+async function loadLastCheckup(
+  supabase: SupabaseClient,
+  person: CirclePerson,
+  owner: string,
+): Promise<string | null> {
   if (!allowsCategory(person, 'documents')) return null;
   const { data, error } = await supabase
     .from('documents')
@@ -159,10 +179,11 @@ export function activeMedicineCount(medicines: Medicine[] | null): number | null
  * what actually enforces it.
  */
 export function useFamilyOverview(people: readonly CirclePerson[]) {
+  const supabase = useSupabase();
   return useQueries({
     queries: people.map((person) => ({
       queryKey: ['family-summary', person.counterpart_id, person.shared_categories.join(',')],
-      queryFn: () => loadSummary(person),
+      queryFn: () => loadSummary(supabase, person),
     })),
     combine: (results) => ({
       summaries: sortByAttention(

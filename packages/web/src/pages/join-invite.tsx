@@ -3,15 +3,7 @@ import { Link, useLocation, useSearchParams } from 'react-router-dom';
 
 import { CodeEntry, LinkOutcome, LinkPage } from '@/components/link-page';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/lib/auth-context';
-import {
-  CIRCLE_ROLE_DESCRIPTIONS,
-  CIRCLE_ROLE_LABELS,
-  describeCategories,
-  useAcceptInvite,
-  useDeclineInvite,
-  useInvitePreview,
-} from '@/lib/circle';
+import { CIRCLE_ROLE_DESCRIPTIONS, CIRCLE_ROLE_LABELS, describeCategories, useAcceptInvite, useAuth, useDeclineInvite, useInvitePreview } from '@nalvita/data';
 
 /** Ask the invitee to sign in first, returning them to this same invite after. */
 function SignInPrompt() {

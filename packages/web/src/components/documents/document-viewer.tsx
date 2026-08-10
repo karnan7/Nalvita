@@ -3,8 +3,7 @@ import { Download, X } from 'lucide-react';
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { auditRecord } from '@/lib/audit';
-import { downloadDocument, isPdf, useSignedUrl } from '@/lib/documents';
+import { auditRecord, isPdf, useDownloadDocument, useSignedUrl, useSupabase } from '@nalvita/data';
 
 interface DocumentViewerProps {
   doc: Document;
@@ -27,11 +26,14 @@ function ViewerBody({ doc }: Readonly<{ doc: Document }>) {
 }
 
 export function DocumentViewer({ doc, onClose }: Readonly<DocumentViewerProps>) {
+  const supabase = useSupabase();
+  const downloadDocument = useDownloadDocument();
+
   // Opening someone else's document is the action their feed cares about, so it
   // is logged here rather than on the signed-URL fetch (which also refreshes).
   useEffect(() => {
-    auditRecord('viewed', 'documents', doc);
-  }, [doc]);
+    auditRecord(supabase, 'viewed', 'documents', doc);
+  }, [supabase, doc]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {

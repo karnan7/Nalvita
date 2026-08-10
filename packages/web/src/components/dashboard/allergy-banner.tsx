@@ -1,5 +1,5 @@
 import { AlertBanner } from '@/components/ui-nalvita';
-import { ALLERGY_SEVERITY_LABELS, sortBySeverity, useAllergies } from '@/lib/allergies';
+import { ALLERGY_SEVERITY_LABELS, sortBySeverity, useAllergies } from '@nalvita/data';
 
 /**
  * Red alert banner surfacing the person's allergies on the dashboard, most

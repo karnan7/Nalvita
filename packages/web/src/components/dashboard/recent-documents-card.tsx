@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 import { CardSkeleton, EmptyState, SectionCard } from '@/components/ui-nalvita';
-import { DOCUMENT_CATEGORY_LABELS, formatDocDate, useDocuments } from '@/lib/documents';
+import { DOCUMENT_CATEGORY_LABELS, formatDocDate, useDocuments } from '@nalvita/data';
 
 const CATEGORY_ICONS: Record<DocumentCategory, LucideIcon> = {
   lab_report: FlaskConical,

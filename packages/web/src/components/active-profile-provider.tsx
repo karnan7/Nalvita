@@ -3,9 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
-import { ActiveProfileContext } from '@/lib/active-profile-context';
-import { useAuth } from '@/lib/auth-context';
-import { useProfile } from '@/lib/profile';
+import { ActiveProfileContext, useAuth, useProfile } from '@nalvita/data';
 
 /** How a family member is referred to when they have not set a name. */
 export function viewingName(person: CirclePerson | null): string {

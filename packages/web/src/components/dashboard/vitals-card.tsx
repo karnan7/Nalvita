@@ -1,7 +1,6 @@
 import { CardSkeleton, EmptyState, SectionCard } from '@/components/ui-nalvita';
 import { VitalStatusBadge } from '@/components/vitals/vital-status-badge';
-import { latestByVitalType } from '@/lib/dashboard';
-import { formatVitalValue, useVitals, VITAL_TYPE_LABELS, VITAL_UNITS } from '@/lib/vitals';
+import { VITAL_TYPE_LABELS, VITAL_UNITS, formatVitalValue, latestByVitalType, useVitals } from '@nalvita/data';
 
 export function VitalsCard() {
   const { data: vitals, isPending, isError } = useVitals();
