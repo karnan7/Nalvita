@@ -53,6 +53,8 @@
   "jest": {
     "preset": "jest-expo",
     "setupFilesAfterEnv": ["<rootDir>/src/test/setup.ts"],
+    "//testTimeout": "Jest's 5s default is too tight for React Native component tests on a CI runner: mounting the provider stack and settling a query takes a few seconds there versus a few hundred ms locally. This is headroom for a slow machine, not for a slow test.",
+    "testTimeout": 20000,
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1",
       "^@nalvita/core$": "<rootDir>/../core/dist/index.js",
