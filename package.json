@@ -12,10 +12,14 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
-    "test:integration": "turbo run test:integration"
+    "test:integration": "turbo run test:integration",
+    "bundle": "turbo run bundle"
   },
+  "//react": "React is pinned at the root, though nothing here imports it, to control hoisting. Without it npm floats a second React to satisfy transitive peers, and Metro resolving two Reacts through a symlinked workspace package fails at runtime with 'invalid hook call'. Expo SDK 57 fixes the version, so every package follows it.",
   "devDependencies": {
-    "turbo": "^2.3.0"
+    "turbo": "^2.3.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
   },
   "engines": {
     "node": ">=20"
