@@ -41,6 +41,11 @@ jobs:
       - name: Test with coverage (web)
         run: npm run test -w @nalvita/web -- --coverage
 
+      # Mobile runs on Jest rather than Vitest — React Native needs a
+      # Metro/Babel-aware transform. Same lcov format either way.
+      - name: Test with coverage (mobile)
+        run: npm run test -w @nalvita/mobile -- --coverage
+
       - name: SonarCloud scan
         uses: SonarSource/sonarqube-scan-action@v5
         env:

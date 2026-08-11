@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Nalvita",
+    "slug": "nalvita",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "nalvita",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.nalvita.mobile"
+    },
+    "android": {
+      "package": "app.nalvita.mobile",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F1F4F3",
+          "dark": { "backgroundColor": "#0C1310" }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -34,6 +34,16 @@ jobs:
       - name: Test
         run: npm run test
 
+      # A typecheck cannot tell you whether Metro can resolve the workspace
+      # packages through their symlinks — only a real bundle can. Kept separate
+      # from `build` so Vercel and the Sonar workflow stay fast.
+      - name: Bundle the mobile app (Metro resolution check)
+        run: npm run bundle
+        env:
+          # The app throws without these; the bundle never contacts Supabase.
+          EXPO_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ci-dummy-anon-key
+
   db-tests:
     name: RLS tests (pgTAP + integration)
     runs-on: ubuntu-latest
