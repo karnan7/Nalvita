@@ -33,3 +33,8 @@ coverage/
 skills-lock.json
 
 CLAUDE.md
+# Database dumps — real health data. The repo is public; these must never be
+# committed. Keep backups outside the repo entirely where you can.
+backup-*.sql
+*.dump
+*.sql.gz

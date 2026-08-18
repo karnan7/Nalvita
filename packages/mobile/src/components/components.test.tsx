@@ -55,28 +55,27 @@ describe('Card', () => {
 describe('TabBarIcon', () => {
   const names: TabIconName[] = ['home', 'documents', 'medicines', 'vitals', 'profile'];
 
-  it.each(names)('renders a distinct glyph for %s', (name) => {
+  it.each(names)('renders an icon for %s', (name) => {
     render(<TabBarIcon name={name} color="#0F6E56" />);
 
-    expect(screen.root).toBeTruthy();
+    expect(screen.toJSON()).toBeTruthy();
   });
 
-  it('gives every tab a different glyph', () => {
-    const glyphs = names.map((name) => {
-      const { unmount } = render(<TabBarIcon name={name} color="#0F6E56" />);
-      const text = screen.root ? screen.toJSON() : null;
-      const glyph = JSON.stringify(text);
+  /** A tab drawn with the wrong symbol still "works", so pin the shapes. */
+  it('draws a different symbol for every tab', () => {
+    const shapes = names.map((name) => {
+      const { unmount, toJSON } = render(<TabBarIcon name={name} color="#0F6E56" />);
+      const shape = JSON.stringify(toJSON());
       unmount();
-      return glyph;
+      return shape;
     });
 
-    expect(new Set(glyphs).size).toBe(names.length);
+    expect(new Set(shapes).size).toBe(names.length);
   });
 
-  /** Decorative: the tab's own label already names it, so it must not double up. */
-  it('is hidden from screen readers', () => {
-    render(<TabBarIcon name="home" color="#0F6E56" />);
+  it('takes the colour the navigator resolved for the active state', () => {
+    const { toJSON } = render(<TabBarIcon name="home" color="#0F6E56" />);
 
-    expect(screen.toJSON()).toBeTruthy();
+    expect(JSON.stringify(toJSON())).toContain('#0F6E56');
   });
 });

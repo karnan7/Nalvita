@@ -216,6 +216,29 @@ export function useDownloadDocument(): (document: Document) => Promise<void> {
   );
 }
 
+/**
+ * Opens a document for *reading* rather than saving.
+ *
+ * The same short-lived signed URL as the download, minus the attachment
+ * disposition — with it, a phone's in-app browser saves the file instead of
+ * showing it, and a PDF never reaches the native viewer. Nothing is written to
+ * disk, which is the point: the file stays in the private bucket and the URL
+ * expires in a minute.
+ */
+export function useOpenDocument(): (document: Document) => Promise<void> {
+  const { client: supabase, openUrl } = usePlatform();
+  return useCallback(
+    async (document: Document) => {
+      const { data, error } = await supabase.storage
+        .from(BUCKET)
+        .createSignedUrl(document.file_path, SIGNED_URL_TTL_SECONDS);
+      if (error) throw error;
+      openUrl(data.signedUrl);
+    },
+    [supabase, openUrl],
+  );
+}
+
 /** Human-readable file size, e.g. "2.4 MB". */
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;

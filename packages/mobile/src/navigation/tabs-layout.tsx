@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { usePreventScreenCapture } from 'expo-screen-capture';
 
 import { TabBarIcon, type TabIconName } from '@/components/tab-bar-icon';
 import { useTheme } from '@/lib/theme';
@@ -21,6 +22,19 @@ export const TABS: { name: string; title: string; icon: TabIconName }[] = [
 
 export function TabsLayout() {
   const theme = useTheme();
+
+  /**
+   * Every screen behind these tabs shows health data, so screen capture is
+   * blocked for the whole signed-in area rather than screen by screen — one
+   * place to be right, and a new screen is covered by default.
+   *
+   * Android honours this outright (FLAG_SECURE): screenshots and screen
+   * recording both fail. iOS has no API to prevent a screenshot at all, so
+   * there it covers screen recording and mirroring only. Worth being plain
+   * about: this raises the cost of leaking a record, it does not make it
+   * impossible.
+   */
+  usePreventScreenCapture();
 
   return (
     <Tabs
