@@ -1,34 +1,40 @@
-import { Text, type ColorValue } from 'react-native';
+import Activity from 'lucide-react-native/icons/activity';
+import FileText from 'lucide-react-native/icons/file-text';
+import LayoutDashboard from 'lucide-react-native/icons/layout-dashboard';
+import Pill from 'lucide-react-native/icons/pill';
+import User from 'lucide-react-native/icons/user';
+import type { ColorValue } from 'react-native';
 
 /**
  * Tab icons.
  *
- * Deliberately typographic for now rather than pulling in an icon set: the web
- * app uses lucide, and the React Native equivalent is a decision that belongs
- * with the screens in KAR-57, where the rest of the iconography gets chosen at
- * once. This keeps the shell honest — real, themed, and sized — without
- * committing the app to a library it has not evaluated.
+ * Same lucide set the web app draws with, so a document, a medicine, or a vital
+ * is the same symbol on both — one design system, not two that happen to agree.
+ *
+ * Imported one icon at a time rather than from the package root: the root
+ * barrel pulls in every icon lucide ships, which bloats the bundle and made the
+ * test suite take over a minute on its own.
  */
 export type TabIconName = 'home' | 'documents' | 'medicines' | 'vitals' | 'profile';
 
-const GLYPHS: Record<TabIconName, string> = {
-  home: '⌂',
-  documents: '▤',
-  medicines: '◐',
-  vitals: '♡',
-  profile: '☺',
-};
+const ICONS = {
+  home: LayoutDashboard,
+  documents: FileText,
+  medicines: Pill,
+  vitals: Activity,
+  profile: User,
+} as const satisfies Record<TabIconName, unknown>;
 
 interface TabBarIconProps {
   name: TabIconName;
   /** Supplied by the navigator, already resolved for the active/inactive state. */
   color: ColorValue;
+  size?: number;
 }
 
-export function TabBarIcon({ name, color }: Readonly<TabBarIconProps>) {
-  return (
-    <Text accessible={false} style={{ color, fontSize: 20, lineHeight: 24 }}>
-      {GLYPHS[name]}
-    </Text>
-  );
+export function TabBarIcon({ name, color, size = 22 }: Readonly<TabBarIconProps>) {
+  const Icon = ICONS[name];
+  // Decorative: the tab's own label already names it, so it must not be
+  // announced twice.
+  return <Icon color={color as string} size={size} accessibilityElementsHidden />;
 }

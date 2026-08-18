@@ -1,8 +1,11 @@
-import { NalvitaDataProvider } from '@nalvita/data';
+import { ActiveProfileContext, NalvitaDataProvider } from '@nalvita/data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
+
+/** The profile every fixture row belongs to. */
+export const PROFILE_ID = '00000000-0000-4000-8000-0000000000aa';
 
 /** One PostgREST-shaped link: awaitable, and still chainable. */
 export function chain(payload: { data: unknown; error: unknown }) {
@@ -32,6 +35,23 @@ export function makeProfileRow(overrides: Record<string, unknown> = {}) {
     updated_at: '2026-07-01T00:00:00.000Z',
     ...overrides,
   };
+}
+
+/**
+ * Routes `from(table)` per table, for screens that read several at once.
+ * `profiles` answers a single row; everything else answers a list.
+ */
+export function stubTables(
+  harness: Harness,
+  tables: Partial<Record<string, Record<string, unknown>[]>>,
+  profile: Record<string, unknown> = makeProfileRow(),
+) {
+  harness.from.mockImplementation((table: string) =>
+    table === 'profiles'
+      ? chain({ data: profile, error: null })
+      : chain({ data: tables[table] ?? [], error: null }),
+  );
+  return harness;
 }
 
 export interface Harness {
@@ -74,7 +94,21 @@ export function renderWithProviders(ui: ReactElement, harness: Harness = makeHar
         appBaseUrl="https://nalvita.test"
         openUrl={harness.openUrl}
       >
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          {/* Every record hook is scoped to a profile and stays disabled until
+              it has one, so a screen renders nothing at all without this. */}
+          <ActiveProfileContext.Provider
+            value={{
+              profileId: PROFILE_ID,
+              isSelf: true,
+              viewing: null,
+              setViewing: () => undefined,
+              guardWrite: (write) => write(),
+            }}
+          >
+            {children}
+          </ActiveProfileContext.Provider>
+        </QueryClientProvider>
       </NalvitaDataProvider>
     );
   }

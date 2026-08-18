@@ -2,6 +2,7 @@ import {
   getVitalStatus,
   vitalInsertSchema,
   vitalSchema,
+  type NalvitaStatus,
   type Vital,
   type VitalStatus,
   type VitalType,
@@ -43,6 +44,33 @@ export const VITAL_STATUS_LABELS: Record<VitalStatus, string> = {
 
 export function statusOf(vital: Vital): VitalStatus {
   return getVitalStatus(vital.type, vital.value_1, vital.value_2);
+}
+
+/**
+ * A reading's clinical status as a Nalvita status colour: normal → green,
+ * borderline → amber, low → blue, high → red alert.
+ *
+ * The two vocabularies deliberately differ — `borderline` is a clinical idea,
+ * `high` is a colour — so the mapping lives here rather than in either app's
+ * components, where the two would drift apart.
+ */
+export const VITAL_STATUS_VARIANT: Record<VitalStatus, NalvitaStatus> = {
+  normal: 'normal',
+  borderline: 'high',
+  low: 'low',
+  high: 'critical',
+};
+
+/**
+ * The colour to show a reading in, or null when it should not be judged at all.
+ *
+ * Weight has no universal healthy range — it depends on height, age, build and
+ * a dozen things the app does not know — so colouring it would be the app
+ * offering a medical opinion it has no business having.
+ */
+export function vitalStatusVariant(vital: Vital): NalvitaStatus | null {
+  if (vital.type === 'weight') return null;
+  return VITAL_STATUS_VARIANT[statusOf(vital)];
 }
 
 /** The reading value as a person would read it — "120/80" for BP, else the number. */
