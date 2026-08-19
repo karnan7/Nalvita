@@ -2,15 +2,53 @@ import { AuthProvider, NalvitaDataProvider, useAuth, useProfile } from '@nalvita
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { LockGate } from '@/components/lock-screen';
+import { ActiveProfileProvider } from '@/lib/active-profile';
+import { LockProvider } from '@/lib/lock';
+import { startOnlineManagerSync } from '@/lib/network';
+import { clearOfflineCache } from '@/lib/offline-cache';
+import { useEmergencyCacheSync } from '@/lib/offline-emergency';
 import { mobilePlatform } from '@/lib/platform';
 import { watchAppStateForAuthRefresh } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
 
 const queryClient = new QueryClient();
+
+/**
+ * Keeps the offline emergency set current, and wipes it on sign-out.
+ *
+ * Rendered rather than called from a screen so it runs for the whole signed-in
+ * session: the cache should be warm before someone loses signal, not written
+ * the first time they happen to open the dashboard.
+ */
+function EmergencyCache() {
+  const { session } = useAuth();
+  useEmergencyCacheSync();
+
+  const wasSignedIn = useRef(false);
+
+  useEffect(() => {
+    if (session) {
+      wasSignedIn.current = true;
+      return;
+    }
+
+    // Only on the transition out of a session — otherwise every cold start
+    // while signed out would churn the encryption key for no reason.
+    if (wasSignedIn.current) {
+      wasSignedIn.current = false;
+      // The next person to hold this phone must not find the last one's
+      // allergy list sitting in it.
+      void clearOfflineCache();
+    }
+  }, [session]);
+
+  return null;
+}
 
 /**
  * Sends people to the right place for their signed-in state.
@@ -77,13 +115,24 @@ export function RootLayout() {
     return stop;
   }, []);
 
+  // React Query assumes it is always online on React Native unless told
+  // otherwise; this is what makes queries pause offline and resume on
+  // reconnect.
+  useEffect(() => startOnlineManagerSync(), []);
+
   return (
     <SafeAreaProvider>
       <NalvitaDataProvider {...mobilePlatform}>
         <AuthProvider>
           <QueryClientProvider client={queryClient}>
-            <StatusBar style={theme.name === 'dark' ? 'light' : 'dark'} />
-            {refreshReady ? <AuthGate /> : null}
+            <ActiveProfileProvider>
+              <LockProvider>
+                <StatusBar style={theme.name === 'dark' ? 'light' : 'dark'} />
+                <EmergencyCache />
+                {/* Nothing below this renders while the app is locked. */}
+                <LockGate>{refreshReady ? <AuthGate /> : null}</LockGate>
+              </LockProvider>
+            </ActiveProfileProvider>
           </QueryClientProvider>
         </AuthProvider>
       </NalvitaDataProvider>

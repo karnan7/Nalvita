@@ -26,6 +26,7 @@ import { Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { VitalBadge } from '@/components/vital-badge';
 import { AlertBanner, EmptyState, SectionCard, StatCard } from '@/components/ui';
+import { useEmergencyFallback } from '@/lib/offline-emergency';
 import { spacing, typeScale, useTheme } from '@/lib/theme';
 
 /**
@@ -44,11 +45,20 @@ export function HomeScreen() {
   const vitals = useVitals();
   const allergies = useAllergies();
 
-  const active = activeMedicines(medicines.data ?? []);
-  const refillsDue = refillDueCount(medicines.data ?? []);
+  // Allergies and current medicines are the emergency set, so they come from
+  // the phone when there is no signal. Documents and vitals are online-only and
+  // simply show empty — cached health data sits outside RLS, and that trade is
+  // only worth making for what someone needs in an ambulance.
+  const offline = useEmergencyFallback({
+    allergies: allergies.data,
+    medicines: medicines.data,
+  });
+
+  const active = activeMedicines(offline.medicines);
+  const refillsDue = refillDueCount(offline.medicines);
   const checkup = lastCheckupDate(documents.data ?? []);
   const latest = latestByVitalType(vitals.data ?? []);
-  const worstAllergies = sortBySeverity(allergies.data ?? []);
+  const worstAllergies = sortBySeverity(offline.allergies);
 
   const greeting = profile?.full_name?.trim() ? `Hello, ${profile.full_name.trim()}` : 'Hello';
 

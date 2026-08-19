@@ -19,6 +19,12 @@
       "expo-router",
       "expo-secure-store",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Nalvita uses Face ID to unlock your health records."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F1F4F3",
