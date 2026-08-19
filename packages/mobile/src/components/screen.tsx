@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { OfflineBanner } from '@/components/offline-banner';
 import { spacing, typeScale, useTheme } from '@/lib/theme';
 
 interface ScreenProps {
@@ -23,6 +24,9 @@ export function Screen({ title, subtitle, children }: Readonly<ScreenProps>) {
             {subtitle}
           </Text>
         ) : null}
+        {/* Every screen, rather than screen by screen: a new screen is covered
+            by default, the same reasoning as the screen-capture block. */}
+        <OfflineBanner />
         {children}
       </ScrollView>
     </View>

@@ -13,10 +13,12 @@ import {
   useProfile,
   useSupabase,
 } from '@nalvita/data';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { Screen } from '@/components/screen';
 import { DetailRow, EmptyState, SectionCard, StatusBadge } from '@/components/ui';
+import { useLock } from '@/lib/lock';
+import { useEmergencyFallback } from '@/lib/offline-emergency';
 import { radius, spacing, typeScale, useTheme } from '@/lib/theme';
 
 /** Severe allergies are the ones that matter in an emergency, so they read red. */
@@ -34,6 +36,12 @@ export function ProfileScreen() {
   const allergies = useAllergies();
   const conditions = useConditions();
   const doctors = useDoctors();
+  const lock = useLock();
+
+  // Allergies are emergency information, so they survive losing signal.
+  // Conditions and doctors do not, by design — they are not what anyone needs
+  // in an ambulance, and every field kept off the device cannot leak from it.
+  const offline = useEmergencyFallback({ allergies: allergies.data });
 
   const age = computeAge(profile?.date_of_birth ?? null);
 
@@ -58,10 +66,15 @@ export function ProfileScreen() {
       </SectionCard>
 
       <SectionCard title="Allergies">
-        {(allergies.data?.length ?? 0) === 0 ? (
+        {offline.allergiesFromCache ? (
+          <Text style={[typeScale.caption, { color: theme.colors.textMuted }]}>
+            Saved on this phone, so it is here without a connection.
+          </Text>
+        ) : null}
+        {offline.allergies.length === 0 ? (
           <EmptyState>None recorded.</EmptyState>
         ) : (
-          sortBySeverity(allergies.data ?? []).map((allergy) => (
+          sortBySeverity(offline.allergies).map((allergy) => (
             <View key={allergy.id} style={styles.row}>
               <View style={styles.rowBody}>
                 <Text style={[typeScale.body, { color: theme.colors.textPrimary }]}>
@@ -121,6 +134,28 @@ export function ProfileScreen() {
             </View>
           ))
         )}
+      </SectionCard>
+
+      <SectionCard title="Security">
+        <View style={styles.row}>
+          <View style={styles.rowBody}>
+            <Text style={[typeScale.body, { color: theme.colors.textPrimary }]}>
+              Unlock with Face ID or fingerprint
+            </Text>
+            <Text style={[typeScale.caption, { color: theme.colors.textMuted }]}>
+              {lock.available
+                ? 'Locks after five minutes away, so a lost phone is not an open record.'
+                : 'Set up a face or fingerprint on this phone to use this.'}
+            </Text>
+          </View>
+          <Switch
+            accessibilityLabel="Unlock with Face ID or fingerprint"
+            disabled={!lock.available || lock.isLoading}
+            value={lock.enabled}
+            onValueChange={lock.setEnabled}
+            trackColor={{ true: theme.colors.interactiveDefault, false: theme.colors.borderStrong }}
+          />
+        </View>
       </SectionCard>
 
       <Pressable

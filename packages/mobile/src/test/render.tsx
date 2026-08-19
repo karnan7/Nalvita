@@ -1,8 +1,10 @@
-import { ActiveProfileContext, NalvitaDataProvider } from '@nalvita/data';
+import { ActiveProfileContext, AuthProvider, NalvitaDataProvider } from '@nalvita/data';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render } from '@testing-library/react-native';
 import type { ReactElement, ReactNode } from 'react';
+
+import { LockProvider } from '@/lib/lock';
 
 /** The profile every fixture row belongs to. */
 export const PROFILE_ID = '00000000-0000-4000-8000-0000000000aa';
@@ -62,19 +64,33 @@ export interface Harness {
   client: SupabaseClient;
 }
 
-/** A stub client plus the mocks a test needs to drive and assert on it. */
-export function makeHarness(): Harness {
+/** The account behind `signedIn: true`. Its profile row is `makeProfileRow()`. */
+export const USER_ID = '00000000-0000-4000-8000-000000000001';
+
+/**
+ * A stub client plus the mocks a test needs to drive and assert on it.
+ *
+ * Signed out by default, which is all most screen tests need — they get their
+ * profile from `ActiveProfileContext` directly. Pass `signedIn` for the few
+ * things that read the session themselves, such as the emergency cache sync
+ * looking up the profile row via `useProfile(session?.user.id)`.
+ */
+export function makeHarness({ signedIn = false }: { signedIn?: boolean } = {}): Harness {
   const from = jest.fn(() => chain({ data: makeProfileRow(), error: null }));
   const rpc = jest.fn(async () => ({ data: [], error: null }));
   const signOut = jest.fn(async () => ({ error: null }));
   const openUrl = jest.fn();
+
+  const session = signedIn
+    ? { user: { id: USER_ID, email: 'test@example.com' }, access_token: 'test-token' }
+    : null;
 
   const client = {
     from,
     rpc,
     auth: {
       signOut,
-      getSession: jest.fn(async () => ({ data: { session: null }, error: null })),
+      getSession: jest.fn(async () => ({ data: { session }, error: null })),
       onAuthStateChange: jest.fn(() => ({ data: { subscription: { unsubscribe: jest.fn() } } })),
     },
     storage: { from: () => ({ createSignedUrl: jest.fn() }) },
@@ -94,21 +110,30 @@ export function renderWithProviders(ui: ReactElement, harness: Harness = makeHar
         appBaseUrl="https://nalvita.test"
         openUrl={harness.openUrl}
       >
-        <QueryClientProvider client={queryClient}>
-          {/* Every record hook is scoped to a profile and stays disabled until
-              it has one, so a screen renders nothing at all without this. */}
-          <ActiveProfileContext.Provider
-            value={{
-              profileId: PROFILE_ID,
-              isSelf: true,
-              viewing: null,
-              setViewing: () => undefined,
-              guardWrite: (write) => write(),
-            }}
-          >
-            {children}
-          </ActiveProfileContext.Provider>
-        </QueryClientProvider>
+        {/* Mirrors `navigation/root-layout.tsx`. Without it `useAuth()` returns
+            the context default and every session-derived lookup — the profile
+            row behind the emergency cache, most of all — is silently
+            disabled. */}
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            {/* Every record hook is scoped to a profile and stays disabled
+                until it has one, so a screen renders nothing at all without
+                this. */}
+            <ActiveProfileContext.Provider
+              value={{
+                profileId: PROFILE_ID,
+                isSelf: true,
+                viewing: null,
+                setViewing: () => undefined,
+                guardWrite: (write) => write(),
+              }}
+            >
+              {/* The profile screen reads the lock preference for its settings
+                  toggle, so screens need this the way the app has it. */}
+              <LockProvider>{children}</LockProvider>
+            </ActiveProfileContext.Provider>
+          </QueryClientProvider>
+        </AuthProvider>
       </NalvitaDataProvider>
     );
   }
