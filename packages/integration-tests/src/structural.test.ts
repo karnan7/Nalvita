@@ -13,6 +13,8 @@ import {
   MEDICINE_STATUSES,
   MEDICINE_TIMINGS,
   MEMBERSHIP_STATUSES,
+  NOTIFICATION_DETAIL_LEVELS,
+  PUSH_PLATFORMS,
   VITAL_TYPES,
 } from '@nalvita/core';
 import { Client } from 'pg';
@@ -48,6 +50,8 @@ describe('Postgres enums mirror constants.ts', () => {
     claim_status: CLAIM_STATUSES,
     invite_status: INVITE_STATUSES,
     membership_status: MEMBERSHIP_STATUSES,
+    notification_detail: NOTIFICATION_DETAIL_LEVELS,
+    push_platform: PUSH_PLATFORMS,
   };
 
   it('every public enum matches its constants array, and none is missing', async () => {
