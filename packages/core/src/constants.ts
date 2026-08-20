@@ -153,3 +153,36 @@ export const VITAL_REFERENCE_RANGES = {
 
 export const VITAL_STATUSES = ['normal', 'borderline', 'high', 'low'] as const;
 export type VitalStatus = (typeof VITAL_STATUSES)[number];
+
+/**
+ * Platforms a push token can belong to. Mirrors the `push_platform` Postgres
+ * enum (KAR-52).
+ */
+export const PUSH_PLATFORMS = ['ios', 'android', 'web'] as const;
+export type PushPlatform = (typeof PUSH_PLATFORMS)[number];
+
+/**
+ * How much a notification may say on a lock screen. Mirrors the
+ * `notification_detail` Postgres enum.
+ *
+ * 'generic' is the default everywhere, and deliberately: a push notification
+ * renders in front of whoever is holding the phone. "Time for your 2pm
+ * medicine" is safe there; naming the medicine tells a stranger on a train
+ * what someone is being treated for. Detail is opt-in.
+ */
+export const NOTIFICATION_DETAIL_LEVELS = ['generic', 'detailed'] as const;
+export type NotificationDetailLevel = (typeof NOTIFICATION_DETAIL_LEVELS)[number];
+
+/**
+ * Every kind of notification the app can send. Mirrors the vocabulary the send
+ * function accepts; a feature adds a type here rather than inventing a string,
+ * so the set stays enumerable for the dashboard.
+ */
+export const NOTIFICATION_TYPES = [
+  'medicine_reminder',
+  'caregiver_alert',
+  'family_nudge',
+  'invite_accepted',
+  'test_notification',
+] as const;
+export type NotificationType = (typeof NOTIFICATION_TYPES)[number];

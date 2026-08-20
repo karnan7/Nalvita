@@ -218,6 +218,7 @@ describe('profileSchema ownership', () => {
     height_cm: null,
     weight_kg: null,
     is_minor: false,
+    notification_detail: 'generic',
     created_at: '2026-08-05T10:00:00+00:00',
     updated_at: '2026-08-05T10:00:00+00:00',
   };
@@ -502,6 +503,7 @@ describe('full-row schemas parse database rows', () => {
       height_cm: null,
       weight_kg: null,
       is_minor: false,
+      notification_detail: 'generic',
       created_at: '2026-07-08T10:15:30+00:00',
       updated_at: '2026-07-08T10:15:30+00:00',
     });

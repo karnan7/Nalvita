@@ -347,6 +347,7 @@ function rowFor(table: string): Record<string, unknown> {
         height_cm: null,
         weight_kg: null,
         is_minor: false,
+        notification_detail: 'generic',
       };
   }
 }
