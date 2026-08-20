@@ -21,6 +21,7 @@ const amma: Profile = {
   height_cm: null,
   weight_kg: null,
   is_minor: false,
+  notification_detail: 'generic' as const,
   created_at: '2026-08-01T00:00:00.000Z',
   updated_at: '2026-08-01T00:00:00.000Z',
 };

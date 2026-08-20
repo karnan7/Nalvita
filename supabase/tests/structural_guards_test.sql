@@ -10,13 +10,14 @@
 --   * a revoked membership cannot be re-accepted
 --   * an owner cannot forge a pre-accepted ('active') invite
 --   * audit entries cannot be spoofed (actor_id) or written by strangers
+--   * push tokens are private to their owner and delivery history is read-only
 --
 -- Everything runs inside one transaction and rolls back.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(34);
 
 -- ---------------------------------------------------------------------------
 -- RLS enabled on every public table
@@ -49,6 +50,12 @@ select is(
 select is(
   (select relrowsecurity from pg_class where oid = 'public.audit_log'::regclass),
   true, 'RLS is enabled on audit_log');
+select is(
+  (select relrowsecurity from pg_class where oid = 'public.push_tokens'::regclass),
+  true, 'RLS is enabled on push_tokens');
+select is(
+  (select relrowsecurity from pg_class where oid = 'public.notification_sends'::regclass),
+  true, 'RLS is enabled on notification_sends');
 
 -- ---------------------------------------------------------------------------
 -- Enums mirror @nalvita/core constants (packages/core/src/constants.ts)
@@ -112,8 +119,24 @@ select ok(
 select ok(
   (select bool_and(not has_table_privilege('anon', format('public.%I', t), 'SELECT'))
    from unnest(array['profiles', 'documents', 'medicines', 'vitals', 'allergies',
-                     'conditions', 'doctors', 'circle_memberships', 'audit_log']) as t),
+                     'conditions', 'doctors', 'circle_memberships', 'audit_log',
+                     'push_tokens', 'notification_sends']) as t),
   'anon cannot SELECT from any table');
+
+-- Delivery history is written only by the send function running as
+-- service_role. The app reads its own counts and can do nothing else to them.
+select ok(
+  not has_table_privilege('authenticated', 'public.notification_sends', 'INSERT')
+  and not has_table_privilege('authenticated', 'public.notification_sends', 'UPDATE')
+  and not has_table_privilege('authenticated', 'public.notification_sends', 'DELETE'),
+  'authenticated can only read notification_sends');
+
+-- A device is the user's own to register and remove from the app.
+select ok(
+  has_table_privilege('authenticated', 'public.push_tokens', 'SELECT')
+  and has_table_privilege('authenticated', 'public.push_tokens', 'INSERT')
+  and has_table_privilege('authenticated', 'public.push_tokens', 'DELETE'),
+  'authenticated manages its own push_tokens rows');
 
 -- ---------------------------------------------------------------------------
 -- Impersonation helper (same mechanism PostgREST uses)
@@ -255,6 +278,33 @@ select throws_ok(
             'viewed_document', 'documents')$$,
   '42501', null,
   'a user without circle access cannot append audit entries about an owner');
+
+-- ---------------------------------------------------------------------------
+-- Push tokens: private to the account that registered them (KAR-52)
+--
+-- A caregiver may read their relative's medicines. Enumerating the devices
+-- that relative owns is a different thing entirely, and nothing grants it —
+-- the send path runs as service_role and looks tokens up itself.
+-- ---------------------------------------------------------------------------
+
+select pg_temp.impersonate('11111111-1111-1111-1111-111111111111');
+
+insert into public.push_tokens (user_id, token, platform, device_label)
+values ('11111111-1111-1111-1111-111111111111', 'ExponentPushToken[owner-device]', 'android', 'Pixel');
+
+select pg_temp.impersonate('22222222-2222-2222-2222-222222222222');
+
+select is(
+  (select count(*) from public.push_tokens
+    where token = 'ExponentPushToken[owner-device]'),
+  0::bigint,
+  'a circle member cannot see the devices belonging to the account they help');
+
+select throws_ok(
+  $$insert into public.push_tokens (user_id, token, platform)
+    values ('11111111-1111-1111-1111-111111111111', 'ExponentPushToken[forged]', 'ios')$$,
+  '42501', null,
+  'a device cannot be registered against somebody else''s account');
 
 select * from finish();
 rollback;

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BLOOD_GROUPS, GENDERS } from '../constants.js';
+import { BLOOD_GROUPS, GENDERS, NOTIFICATION_DETAIL_LEVELS } from '../constants.js';
 import { isoDate, isoDateTime } from './shared.js';
 
 /**
@@ -21,6 +21,12 @@ export const profileSchema = z.object({
   height_cm: z.number().positive().nullable(),
   weight_kg: z.number().positive().nullable(),
   is_minor: z.boolean(),
+  /**
+   * How much a push notification may say on this person's lock screen.
+   * 'generic' by default, so someone who never opens settings is the one who
+   * gets the private behaviour rather than the leaky one.
+   */
+  notification_detail: z.enum(NOTIFICATION_DETAIL_LEVELS),
   created_at: isoDateTime,
   updated_at: isoDateTime,
 });
