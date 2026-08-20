@@ -155,7 +155,12 @@ describe('notificationPayloadSchema', () => {
    * truncation rule applied centrally would leak by accident.
    */
   it('will not accept a detailed body without a generic one to fall back to', () => {
-    const { genericBody: _omitted, ...withoutGeneric } = payload;
+    const withoutGeneric = {
+      user_id: USER,
+      type: 'medicine_reminder',
+      title: 'Medicine reminder',
+      body: 'Time for your Metformin',
+    };
 
     expect(notificationPayloadSchema.safeParse(withoutGeneric).success).toBe(false);
   });
