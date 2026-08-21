@@ -79,5 +79,22 @@ jobs:
       - name: Build packages
         run: npm run build
 
+      # Edge Functions are not part of `supabase start`. Without this the
+      # send-notification suite would skip itself and CI would report green
+      # while testing nothing. --no-verify-jwt leaves the platform gate off so
+      # the function's own service-key check is what the tests exercise.
+      - name: Serve Edge Functions
+        run: supabase functions serve --no-verify-jwt &
+
+      - name: Wait for Edge Functions to answer
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST               http://127.0.0.1:54321/functions/v1/send-notification               -H 'Content-Type: application/json' -d '{}' || true)
+            if [ "$code" = "403" ]; then echo "Edge Functions ready"; exit 0; fi
+            sleep 2
+          done
+          echo "Edge Functions did not come up" >&2
+          exit 1
+
       - name: Run RLS integration suite
         run: npm run test:integration
