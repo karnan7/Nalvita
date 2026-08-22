@@ -1,9 +1,12 @@
+import { AuthProvider, NalvitaDataProvider } from '@nalvita/data';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, render, waitFor } from '@testing-library/react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-import { registerPushToken, unregisterPushToken } from '@/lib/push';
+import { registerPushToken, unregisterPushToken, usePushRegistration } from '@/lib/push';
 
 /**
  * Making this phone reachable (KAR-52).
@@ -195,5 +198,79 @@ describe('signing out', () => {
     const harness = makeHarness();
 
     await expect(unregisterPushToken(harness.client)).resolves.toBeUndefined();
+  });
+});
+
+describe('staying registered while signed in', () => {
+  function Probe() {
+    usePushRegistration();
+    return null;
+  }
+
+  function mount(harness: Harness, signedIn: boolean) {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const session = signedIn
+      ? { user: { id: 'user-1', email: 'test@example.com' }, access_token: 't' }
+      : null;
+
+    const client = {
+      ...harness.client,
+      auth: {
+        getSession: jest.fn(async () => ({ data: { session }, error: null })),
+        onAuthStateChange: jest.fn(() => ({
+          data: { subscription: { unsubscribe: jest.fn() } },
+        })),
+      },
+    } as unknown as SupabaseClient;
+
+    return render(
+      <NalvitaDataProvider client={client} appBaseUrl="https://nalvita.test" openUrl={jest.fn()}>
+        <AuthProvider>
+          <QueryClientProvider client={queryClient}>
+            <Probe />
+          </QueryClientProvider>
+        </AuthProvider>
+      </NalvitaDataProvider>,
+    );
+  }
+
+  it('registers the device once a session exists', async () => {
+    const harness = makeHarness();
+
+    mount(harness, true);
+
+    await waitFor(() => {
+      expect(harness.rpc).toHaveBeenCalledWith('register_push_token', expect.anything());
+    });
+  });
+
+  /**
+   * Registering while signed out would have no account to attach the token to,
+   * and the RPC would reject it — so the guard is here, not only in the SQL.
+   */
+  it('does nothing while nobody is signed in', async () => {
+    const harness = makeHarness();
+
+    mount(harness, false);
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(harness.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe('platforms with no Expo token to get', () => {
+  /**
+   * 'web' exists in the enum for the browser client, which registers a VAPID
+   * subscription instead. React Native Web reaching this code would otherwise
+   * store a token Expo never issued.
+   */
+  it('does not register on web, which uses a different mechanism entirely', async () => {
+    Platform.OS = 'web';
+    const harness = makeHarness();
+
+    expect(await registerPushToken(harness.client)).toBeNull();
+    expect(harness.rpc).not.toHaveBeenCalled();
   });
 });

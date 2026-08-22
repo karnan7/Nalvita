@@ -1,4 +1,6 @@
 import type { PushPlatform } from '@nalvita/core';
+import { useAuth, useSupabase } from '@nalvita/data';
+import { useEffect } from 'react';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
@@ -122,4 +124,27 @@ export async function unregisterPushToken(supabase: SupabaseClient): Promise<voi
     // Offline sign-out: the row outlives the session. The send path prunes it
     // when Expo reports the installation gone, so this is untidy, not unsafe.
   }
+}
+
+/**
+ * Keeps this phone registered for as long as somebody is signed in.
+ *
+ * A hook rather than an effect inside the layout, mirroring
+ * `useEmergencyCacheSync`: it keeps the logic somewhere it can be tested
+ * directly, and leaves the component in `root-layout.tsx` as the one line that
+ * says *when* it runs.
+ *
+ * Runs on every app start, not only at login, because the OS can reissue a
+ * token at any time and a stale one is a device that silently stops receiving
+ * reminders. Re-registering is cheap and idempotent.
+ */
+export function usePushRegistration(): void {
+  const { session } = useAuth();
+  const supabase = useSupabase();
+  const userId = session?.user.id;
+
+  useEffect(() => {
+    if (!userId) return;
+    void registerPushToken(supabase);
+  }, [userId, supabase]);
 }
