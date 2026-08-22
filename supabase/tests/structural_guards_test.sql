@@ -17,7 +17,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(34);
+select plan(38);
 
 -- ---------------------------------------------------------------------------
 -- RLS enabled on every public table
@@ -305,6 +305,35 @@ select throws_ok(
     values ('11111111-1111-1111-1111-111111111111', 'ExponentPushToken[forged]', 'ios')$$,
   '42501', null,
   'a device cannot be registered against somebody else''s account');
+
+-- ---------------------------------------------------------------------------
+-- register_push_token: claims a token for the caller, and only the caller
+-- ---------------------------------------------------------------------------
+
+-- The member takes over the phone the owner registered above. A plain insert
+-- would fail on the unique token and leave the owner's reminders arriving here.
+select lives_ok(
+  $$select public.register_push_token('ExponentPushToken[owner-device]', 'android', 'Pixel 7')$$,
+  'a handed-on phone can be claimed by whoever now holds it');
+
+select is(
+  (select user_id from public.push_tokens
+    where token = 'ExponentPushToken[owner-device]'),
+  '22222222-2222-2222-2222-222222222222'::uuid,
+  'claiming moves the token to the new account rather than duplicating it');
+
+select is(
+  (select count(*) from public.push_tokens
+    where token = 'ExponentPushToken[owner-device]'),
+  1::bigint,
+  'one token belongs to exactly one account');
+
+-- The privilege it holds is narrow: it can detach a token from whoever had it,
+-- and nothing else. There is no argument for whose account to claim it into.
+select throws_ok(
+  $$select public.register_push_token('', 'ios', null)$$,
+  '23514', null,
+  'an empty token is refused rather than stored');
 
 select * from finish();
 rollback;

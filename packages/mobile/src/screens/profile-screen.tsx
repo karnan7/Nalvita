@@ -18,6 +18,7 @@ import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Screen } from '@/components/screen';
 import { DetailRow, EmptyState, SectionCard, StatusBadge } from '@/components/ui';
 import { useLock } from '@/lib/lock';
+import { unregisterPushToken } from '@/lib/push';
 import { useEmergencyFallback } from '@/lib/offline-emergency';
 import { radius, spacing, typeScale, useTheme } from '@/lib/theme';
 
@@ -161,7 +162,12 @@ export function ProfileScreen() {
       <Pressable
         accessibilityRole="button"
         onPress={() => {
-          void supabase.auth.signOut();
+          void (async () => {
+            // Before signOut, not after: detaching the device goes through RLS
+            // and needs the session that is about to be discarded.
+            await unregisterPushToken(supabase);
+            await supabase.auth.signOut();
+          })();
         }}
         style={[
           styles.signOut,

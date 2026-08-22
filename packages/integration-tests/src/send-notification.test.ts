@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import {
   admin,
   createTestUser,
@@ -278,5 +278,103 @@ describe.skipIf(!functionAvailable)('what it writes down', () => {
 
     expect(updateError).not.toBeNull();
     expect(deleteError).not.toBeNull();
+  });
+});
+
+/**
+ * Token pruning (AC 5).
+ *
+ * Gated behind an explicit opt-in rather than probing for the stub. If these
+ * ran while the function still pointed at the real endpoint they would call
+ * Expo from CI, which is both impolite and unreliable — and the failure would
+ * look like a bug in Nalvita rather than a misconfigured harness.
+ *
+ * To run:
+ *   supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.test
+ *   NALVITA_EXPO_STUB=1 npm run test:integration
+ */
+const stubWired = process.env.NALVITA_EXPO_STUB === '1';
+
+async function registerDevice(token: string) {
+  await admin.from('push_tokens').insert({
+    user_id: recipient.id,
+    token,
+    platform: 'android',
+    device_label: 'Pixel 7',
+  });
+}
+
+async function tokensFor(userId: string) {
+  const { data } = await admin.from('push_tokens').select('token').eq('user_id', userId);
+  return (data ?? []).map((row) => row.token as string);
+}
+
+describe.skipIf(!functionAvailable || !stubWired)('pruning devices that are gone', () => {
+  beforeEach(async () => {
+    await admin.from('push_tokens').delete().eq('user_id', recipient.id);
+  });
+
+  /**
+   * The app has been uninstalled, or the token reissued. Keeping the row means
+   * retrying a dead address on every send, forever.
+   */
+  it('deletes a token Expo reports as no longer registered', async () => {
+    await registerDevice('ExponentPushToken[dead-device]');
+
+    const response = await send(payload(), config.serviceRoleKey);
+    const result = (await response.json()) as SendResult;
+
+    expect(result.failed).toBe(1);
+    expect(await tokensFor(recipient.id)).toHaveLength(0);
+  });
+
+  /**
+   * The distinction that matters: a rate limit or a transient refusal is not
+   * evidence the device is gone. Pruning on any failure would quietly
+   * unsubscribe people during an incident.
+   */
+  it('keeps a token that failed for some other reason', async () => {
+    await registerDevice('ExponentPushToken[broken-device]');
+
+    const response = await send(payload(), config.serviceRoleKey);
+    const result = (await response.json()) as SendResult;
+
+    expect(result.failed).toBe(1);
+    expect(await tokensFor(recipient.id)).toEqual(['ExponentPushToken[broken-device]']);
+  });
+
+  it('leaves a working device alone and counts it delivered', async () => {
+    await registerDevice('ExponentPushToken[good-device]');
+
+    const response = await send(payload(), config.serviceRoleKey);
+    const result = (await response.json()) as SendResult;
+
+    expect(result.delivered).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(await tokensFor(recipient.id)).toEqual(['ExponentPushToken[good-device]']);
+  });
+
+  it('prunes only the dead device when a person has several', async () => {
+    await registerDevice('ExponentPushToken[dead-device]');
+    await registerDevice('ExponentPushToken[good-device]');
+
+    const response = await send(payload(), config.serviceRoleKey);
+    const result = (await response.json()) as SendResult;
+
+    expect(result.device_count).toBe(2);
+    expect(result.delivered).toBe(1);
+    expect(await tokensFor(recipient.id)).toEqual(['ExponentPushToken[good-device]']);
+  });
+
+  it('records the delivery counts it actually saw', async () => {
+    await admin.from('notification_sends').delete().eq('user_id', recipient.id);
+    await registerDevice('ExponentPushToken[good-device]');
+
+    await send(payload({ type: 'medicine_reminder' }), config.serviceRoleKey);
+
+    const [entry] = await sendsFor(recipient.id);
+    expect(entry.device_count).toBe(1);
+    expect(entry.delivered_count).toBe(1);
+    expect(entry.failed_count).toBe(0);
   });
 });

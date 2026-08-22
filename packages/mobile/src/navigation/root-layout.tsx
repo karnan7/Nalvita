@@ -12,6 +12,7 @@ import { LockProvider } from '@/lib/lock';
 import { startOnlineManagerSync } from '@/lib/network';
 import { clearOfflineCache } from '@/lib/offline-cache';
 import { useEmergencyCacheSync } from '@/lib/offline-emergency';
+import { usePushRegistration } from '@/lib/push';
 import { mobilePlatform } from '@/lib/platform';
 import { watchAppStateForAuthRefresh } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -47,6 +48,18 @@ function EmergencyCache() {
     }
   }, [session]);
 
+  return null;
+}
+
+/**
+ * Makes this phone reachable while somebody is signed in.
+ *
+ * Failure is deliberately silent, inside the hook. Someone who refused
+ * notifications, or who is on a simulator, or who is offline, must still get a
+ * working app — push is an addition to Nalvita, never a precondition for it.
+ */
+function PushRegistration() {
+  usePushRegistration();
   return null;
 }
 
@@ -129,6 +142,7 @@ export function RootLayout() {
               <LockProvider>
                 <StatusBar style={theme.name === 'dark' ? 'light' : 'dark'} />
                 <EmergencyCache />
+                <PushRegistration />
                 {/* Nothing below this renders while the app is locked. */}
                 <LockGate>{refreshReady ? <AuthGate /> : null}</LockGate>
               </LockProvider>

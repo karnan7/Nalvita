@@ -102,8 +102,11 @@ function parseRequest(payload: unknown): SendRequest | string {
     }
   }
 
-  if (!NOTIFICATION_TYPES.includes(p.type as NotificationType)) {
-    return `Unknown notification type: ${String(p.type)}.`;
+  // Every field above is now known to be a non-empty string, so this reads the
+  // value back as one rather than stringifying an `unknown`.
+  const type = p.type as string;
+  if (!NOTIFICATION_TYPES.includes(type as NotificationType)) {
+    return `Unknown notification type: ${type}.`;
   }
 
   if (p.route !== undefined && typeof p.route !== 'string') {

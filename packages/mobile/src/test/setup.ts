@@ -68,3 +68,30 @@ jest.mock('expo-network', () => ({
   addNetworkStateListener: jest.fn(() => ({ remove: jest.fn() })),
   useNetworkState: jest.fn(() => ({ isConnected: true, isInternetReachable: true })),
 }));
+
+// Push registration (KAR-52). Defaults describe the ordinary case: a real
+// phone, permission already granted, Expo issuing a token. Tests narrow these
+// to the cases that matter — a simulator, a refusal, an unreachable Expo.
+jest.mock('expo-notifications', () => ({
+  getPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
+  requestPermissionsAsync: jest.fn(async () => ({ granted: true, canAskAgain: true })),
+  getExpoPushTokenAsync: jest.fn(async () => ({ data: 'ExponentPushToken[test-device]' })),
+}));
+
+jest.mock('expo-device', () => ({
+  // Without __esModule, babel's interop hands the module under test a *copy*
+  // of this object, and a test flipping `isDevice` would change only its own
+  // copy — the simulator case would silently never be exercised.
+  __esModule: true,
+  isDevice: true,
+  // The model name, never the owner-given device name — see lib/push.ts.
+  modelName: 'Pixel 7',
+}));
+
+// Expo issues push tokens against an EAS project. The real id is written into
+// app.json by `npx eas init`; until that is run the app has none and
+// registration no-ops, which is why tests supply one explicitly.
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: { expoConfig: { extra: { eas: { projectId: 'test-project-id' } } } },
+}));
