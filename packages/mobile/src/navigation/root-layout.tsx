@@ -1,4 +1,10 @@
-import { AuthProvider, NalvitaDataProvider, useAuth, useProfile } from '@nalvita/data';
+import {
+  AuthProvider,
+  NalvitaDataProvider,
+  useAuth,
+  useProfile,
+  useSupabase,
+} from '@nalvita/data';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -12,6 +18,7 @@ import { LockProvider } from '@/lib/lock';
 import { startOnlineManagerSync } from '@/lib/network';
 import { clearOfflineCache } from '@/lib/offline-cache';
 import { useEmergencyCacheSync } from '@/lib/offline-emergency';
+import { registerPushToken } from '@/lib/push';
 import { mobilePlatform } from '@/lib/platform';
 import { watchAppStateForAuthRefresh } from '@/lib/supabase';
 import { useTheme } from '@/lib/theme';
@@ -46,6 +53,30 @@ function EmergencyCache() {
       void clearOfflineCache();
     }
   }, [session]);
+
+  return null;
+}
+
+/**
+ * Makes this phone reachable while somebody is signed in.
+ *
+ * Runs on every app start rather than only at login: the token can be reissued
+ * by the OS at any time, and a stale one is a device that silently stops
+ * receiving reminders. Re-registering is cheap and idempotent.
+ *
+ * Failure is deliberately silent. Someone who refused notifications, or who is
+ * on a simulator, or who is offline, must still get a working app — push is an
+ * addition to Nalvita, never a precondition for using it.
+ */
+function PushRegistration() {
+  const { session } = useAuth();
+  const supabase = useSupabase();
+  const userId = session?.user.id;
+
+  useEffect(() => {
+    if (!userId) return;
+    void registerPushToken(supabase);
+  }, [userId, supabase]);
 
   return null;
 }
@@ -129,6 +160,7 @@ export function RootLayout() {
               <LockProvider>
                 <StatusBar style={theme.name === 'dark' ? 'light' : 'dark'} />
                 <EmergencyCache />
+                <PushRegistration />
                 {/* Nothing below this renders while the app is locked. */}
                 <LockGate>{refreshReady ? <AuthGate /> : null}</LockGate>
               </LockProvider>

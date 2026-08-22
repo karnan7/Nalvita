@@ -84,7 +84,7 @@ jobs:
       # while testing nothing. --no-verify-jwt leaves the platform gate off so
       # the function's own service-key check is what the tests exercise.
       - name: Serve Edge Functions
-        run: supabase functions serve --no-verify-jwt &
+        run: supabase functions serve --no-verify-jwt --env-file supabase/functions/.env.test &
 
       - name: Wait for Edge Functions to answer
         run: |
@@ -98,3 +98,7 @@ jobs:
 
       - name: Run RLS integration suite
         run: npm run test:integration
+        env:
+          # Opts the token-pruning tests in. They are gated because, without
+          # the stub wired above, they would call the real Expo push API.
+          NALVITA_EXPO_STUB: '1'
