@@ -80,6 +80,24 @@ a phone. Widening the set needs that trade made deliberately. Everything cached
 lives under a single key so the boundary is testable, and
 `offline-cache.test.ts` asserts the store never holds a second one.
 
+**A push token belongs to the phone, not the person.** `src/lib/push.ts`
+registers this device through the `register_push_token` RPC rather than a plain
+insert, because an Expo token survives sign-out: hand the phone to someone else
+and the token does not change. Moving it between accounts needs privileges RLS
+will not give a user over somebody else's row, so that one `SECURITY DEFINER`
+function exists to do exactly that and nothing more.
+
+The matching half is `unregisterPushToken`, which the Profile screen calls
+**before** `signOut()` — the delete goes through RLS and needs the session that
+is about to be thrown away. Run it after and the row simply stays, sending this
+person's medicine reminders to a phone they have handed back.
+
+Registration returns `null` rather than throwing on every ordinary reason a
+device cannot receive push — a simulator, a refused permission, no EAS project
+id. Push is not a precondition for using Nalvita, and an exception here would
+break sign-in for anyone who tapped "Don't allow". Nothing in this file decides
+what a notification *says*; see `supabase/functions/README.md` for that.
+
 ## EAS builds
 
 Everything is in `eas.json`. What the Expo account needs:
@@ -108,5 +126,6 @@ no $25 fee until an actual store listing is wanted.
 
 ## Not here yet
 
-Push notifications (KAR-52), camera document scanning (KAR-50), and profile
-switching on mobile — the app is self-only for now, unlike the web app.
+Camera document scanning (KAR-50) and profile switching on mobile — the app is
+self-only for now, unlike the web app. Push tokens register (below), but nothing
+schedules a send yet; reminders arrive with KAR-47.
