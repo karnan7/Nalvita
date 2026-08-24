@@ -11,13 +11,14 @@
 --   * an owner cannot forge a pre-accepted ('active') invite
 --   * audit entries cannot be spoofed (actor_id) or written by strangers
 --   * push tokens are private to their owner and delivery history is read-only
+--   * the scheduled-send entry point is unreachable by any API role
 --
 -- Everything runs inside one transaction and rolls back.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(40);
 
 -- ---------------------------------------------------------------------------
 -- RLS enabled on every public table
@@ -137,6 +138,29 @@ select ok(
   and has_table_privilege('authenticated', 'public.push_tokens', 'INSERT')
   and has_table_privilege('authenticated', 'public.push_tokens', 'DELETE'),
   'authenticated manages its own push_tokens rows');
+
+-- ---------------------------------------------------------------------------
+-- The scheduled-send entry point is server-side only (KAR-52)
+--
+-- notify.send_push_notification is SECURITY DEFINER and sends to an arbitrary
+-- user_id, so anything that can execute it can put text on a stranger's lock
+-- screen. Two independent barriers, asserted separately so a change that
+-- removes one still fails here rather than in production.
+-- ---------------------------------------------------------------------------
+
+select ok(
+  not has_schema_privilege('anon', 'notify', 'USAGE')
+  and not has_schema_privilege('authenticated', 'notify', 'USAGE'),
+  'the API roles cannot even enter the notify schema');
+
+select ok(
+  not has_function_privilege('anon',
+    'notify.send_push_notification(uuid, text, text, text, text, text)', 'EXECUTE')
+  and not has_function_privilege('authenticated',
+    'notify.send_push_notification(uuid, text, text, text, text, text)', 'EXECUTE')
+  and not has_function_privilege('service_role',
+    'notify.send_push_notification(uuid, text, text, text, text, text)', 'EXECUTE'),
+  'no API role may execute the scheduled-send entry point');
 
 -- ---------------------------------------------------------------------------
 -- Impersonation helper (same mechanism PostgREST uses)
