@@ -77,6 +77,63 @@ has only the detailed wording and falls back to it.
 device's `data` payload, so a record id is acceptable there and a health value
 never is.
 
+## Calling it from a schedule
+
+Nothing user-facing can call the function — it takes the service key, which
+never leaves a server. The caller is Postgres, through
+`notify.send_push_notification(user_id, type, title, body, generic_body, route)`
+(migration `20260824213010_scheduled_sends.sql`):
+
+```sql
+select cron.schedule(
+  'medicine-reminders',
+  '* * * * *',
+  $$select notify.send_push_notification(
+      m.user_id, 'medicine_reminder', 'Nalvita',
+      'Time for your ' || m.name, 'Time for your ' || to_char(m.at, 'HH12:MI am') || ' medicine')
+    from ... $$
+);
+```
+
+The function posts asynchronously through `pg_net` and returns a request id;
+the reply lands in `net._http_response`, and `cron.job_run_details` records
+whether the job itself ran. Both are worth checking when a notification does not
+arrive — a job can succeed while the request 403s.
+
+Three deliberate constraints:
+
+- **It lives in the `notify` schema, not `public`.** PostgREST exposes
+  `public`, `storage`, and `graphql_public` (`config.toml`), so nothing here is
+  reachable over HTTP whatever happens to its grants later.
+- **No role may execute it** — not `anon`, not `authenticated`, not
+  `service_role`. It sends to an arbitrary `user_id`, so the only callers are
+  pg_cron jobs (which run as the owner) and `SECURITY DEFINER` functions that
+  have already checked permission. A user-initiated nudge needs its own RPC that
+  verifies circle access first, then calls this.
+- **It raises rather than returning quietly** when the Vault secrets are
+  missing. A silent no-op would mean every scheduled notification going missing
+  while cron reported success.
+
+### Deploy step: the two Vault secrets
+
+`send_push_notification` reads its target and its credential from Vault at call
+time, because this repo is public and a migration is the last place a service
+key may appear. **Nothing sends until these exist** — run once per environment,
+in the SQL editor:
+
+```sql
+select vault.create_secret(
+  'https://<project-ref>.supabase.co/functions/v1/send-notification',
+  'nalvita_send_notification_url');
+select vault.create_secret('<service-role-key>', 'nalvita_service_role_key');
+```
+
+Locally the URL is `http://kong:8000/functions/v1/send-notification` — the
+in-cluster address, because `pg_net` runs inside the database container where
+`127.0.0.1:54321` is that container rather than the gateway. The integration
+suite provisions both secrets itself and removes them afterwards, so local
+development needs this only for manual testing.
+
 ## Running them locally
 
 Functions are **not** part of `supabase start` — they need a second process:
@@ -100,6 +157,11 @@ than failing — the function is not part of `supabase start`, so a red suite
 would only be reporting a missing dev process. That is convenient locally and
 dangerous in CI, so `ci.yml` starts the server, polls until it answers, and
 fails the job if it never does. Check there before assuming green means run.
+
+`scheduled-sends.test.ts` is the slow one (~13s) and unavoidably so: pg_cron's
+finest granularity is a five-second interval and `pg_net` posts
+asynchronously, so it schedules a real job and polls. It provisions the Vault
+secrets it needs and deletes them in teardown.
 
 The token-pruning tests additionally require `NALVITA_EXPO_STUB=1`. `expo-stub`
 picks its reply from the token itself, so a test chooses the outcome by choosing
